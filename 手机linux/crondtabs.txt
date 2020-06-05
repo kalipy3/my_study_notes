@@ -4,6 +4,10 @@ crondtabs.txt
 :Email: android@localhost
 :Date: 2020-06-05 16:41
 
+需求：
+定时执行python3 3.py,而3.py是一个微信我在校园的签到程序,为了让其每天早上6：00自动签到，则可以通过crondtab定时任务自动在6:00运行3.py，进而完成打卡。
+
+
 1.安装crontab:
 sudo apt install crontabs
 
