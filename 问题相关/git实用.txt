@@ -1,0 +1,21 @@
+git实用.txt
+
+:Author: android
+:Email: android@localhost
+:Date: 2020-06-05 16:23
+
+1.
+git push指定分支
+git push origin dev
+dev为指定的分支名称
+
+2.
+fatal: remote origin already exists.解决方法
+
+git remote add origin**************
+fatal: remote origin already exists.（报错远程起源已经存在。）
+
+解决办法如下：
+1、先输入 git remote rm origin
+2、再输入 git remote add origin**************
+
