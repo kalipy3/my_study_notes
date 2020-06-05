@@ -1,0 +1,11 @@
+常用service的启动命令.txt
+
+:Author: android
+:Email: android@localhost
+:Date: 2020-06-05 18:10
+
+sudo service vsftpd start
+
+sudo service cron start
+
+sudo service mysql start
