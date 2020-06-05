@@ -1,0 +1,38 @@
+安装vundle:
+git clone https://github.com/gmarik/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+
+安装tern:
+$ cd ~/.vim/bundle
+$ git clone https://github.com/marijnh/tern_for_vim
+
+在 ~/.vimrc 中添加
+
+Plugin 'marijnh/tern_for_vim'
+
+在 Vim 中运行
+$ vim
+
+:PluginInstall
+
+
+    配置.vimrc， 执行以下指令开启
+vi .vimrc
+
+进入后将以下贴上复制贴上
+
+set nocompatible               "去除VIM一致性，必须"
+filetype off                   "必须"
+
+"设置包括vundle和初始化相关的运行时路径"
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+"启用vundle管理插件，必须"
+Plugin 'VundleVim/Vundle.vim'
+
+
+"在此增加其他插件，安装的插件需要放在vundle#begin和vundle#end之间"
+"安装github上的插件格式为 Plugin '用户名/插件仓库名'"
+
+call vundle#end()              
+filetype plugin indent on      "加载vim自带和插件相应的语法和文件类型相关脚本，必须"

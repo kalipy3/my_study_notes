@@ -1,0 +1,31 @@
+docker的宿主系统是centos，为什么可以运行ubuntu的镜像呢？
+
+首先需要区分Linux内核与Linux发行版:
+    Linux内核是Linux操作系统的核心, 负责硬件管理, 比如管理内存、管理磁盘（文件系统）
+	、管理CPU(进程)等等...
+    Linux发行版是在Linux内核的基础上添加了一些工具软件,比如图形界面、函数库、软件包管理系统等等...
+	CentOS与Ubuntu是不同的Linux发行版, 它们都是基于Linux内核， 只是添加的工具软件
+	不同。比如， 他们的软件包管理系统不同， CentOS使用yum命令安装软件， 而Ubuntu
+	使用apt-get命令安装软件。
+因此CentOS与Ubuntu的内核是相同的(版本可能不同), 只是所安装的软件不同， 即文件系统不同。
+
+Docker容器技术是基于Linux内核实现的,它主要用到了两个内核模块:
+    Namespace： 用于容器的隔离， 例如PID Namespace使得容器中的进程无法感知宿主机以及
+	其他容器中的进程。
+    Cgroups: 用于容器的资源控制， 比如限制容器所使用的内存大小或者CPU个数。
+在CentOS上运行基于Ubuntu镜像的容器时, 容器使用了CentOS主机的内核以及Ubuntu镜像, Ubuntu镜
+像中安装了Ubuntu的各种软件(apt-get)。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

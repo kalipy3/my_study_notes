@@ -1,0 +1,43 @@
+安装扩展：
+1.pip install jupyter_contrib_nbextensions
+
+2.jupyter contrib nbextension install --user
+
+3.pip install jupyter_nbextensions_configurator
+
+扩展说明：
+常用扩展功能，勾选上即可：
+最常用功能说明，建议勾选上：
+Collapsible headings 折叠标题
+Notify 通知机制，跑一些耗时较久的任务，完成后通知
+Codefolding 折叠代码
+Zen mode extension 隐藏活动状态栏，方便注意代码
+Execute time extension 显示运行的时间
+—
+
+报错：
+ src/lxml/includes/etree_defs.h:14:10: fatal error: libxml/xmlversion.h: No such file or directory
+   #include "libxml/xmlversion.h"
+            ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  Compile failed: command 'aarch64-linux-gnu-gcc' failed with exit status 1
+  creating tmp
+  cc -I/usr/include/libxml2 -c /tmp/xmlXPathInitmypevp06.c -o tmp/xmlXPathInitmypevp06.o
+  /tmp/xmlXPathInitmypevp06.c:1:10: fatal error: libxml/xpath.h: No such file or directory
+   #include "libxml/xpath.h"
+            ^~~~~~~~~~~~~~~~
+  compilation terminated.
+  *********************************************************************************
+  Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?
+  *********************************************************************************
+  error: command 'aarch64-linux-gnu-gcc' failed with exit status 1
+
+  ----------------------------------------
+  Failed building wheel for lxml
+
+
+
+解决报错：
+a)sudo apt-get install python-dev python3-dev libxml2-dev libxslt1-dev zlib1g-dev
+b)pip install lxml
+c)再次执行安装扩展命令

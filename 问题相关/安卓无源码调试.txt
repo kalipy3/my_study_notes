@@ -1,0 +1,17 @@
+请参考手机如何adb连接手机篇！！！和ro.debug标识更改让所有app都可调试的那篇
+
+
+C:\Users\bossliu>adb shell
+
+shell@R7:/ $ am start -D -n com.honeybee.app/.ui.SplashActivity
+am start -D -n com.honeybee.app/.ui.SplashActivity
+Starting: Intent { cmp=com.honeybee.app/.ui.SplashActivity }
+
+shell@R7:/ $ ps | grep honeybee
+ps | grep honeybee
+u0_a127   28114 377   1540724 41096 ffffffff 00000000 R com.honeybee.app
+
+shell@R7:/ $ exit
+exit
+
+C:\Users\bossliu>adb forward tcp:8700 jdwp:28114

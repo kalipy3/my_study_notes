@@ -1,0 +1,307 @@
+git安装：
+a)sudo apt-get install git
+b)安装完成后，还需要最后一步设置，在命令行输入：
+$ git config --global user.name "Your Name"
+$ git config --global user.email "email@example.com"
+c)创建一个版本库非常简单，首先，选择一个合适的地方，创
+建一个空目录：
+$ mkdir learngit
+$ cd learngit
+$ pwd
+/Users/michael/learngit
+d)通过git init命令把这个目录变成Git可以管理的仓库：
+$ git init
+Initialized empty Git repository in /Users/michael/learngit/.git/
+
+注意：
+把文件添加到版本库
+首先这里再明确一下，所有的版本控制系统，其实只能跟踪文本文件的改动，比
+如TXT文件，网页，所有的程序代码等等，Git也不例外。版本控制系统可以告诉
+你每次的改动，比如在第5行加了一个单词“Linux”，在第8行删了一个单词“Windo
+ws”。而图片、视频这些二进制文件，虽然也能由版本控制系统管理，但没法跟踪
+文件的变化，只能把二进制文件每次改动串起来，也就是只知道图片从100KB改成
+了120KB，但到底改了啥，版本控制系统不知道，也没法知道。
+不幸的是，Microsoft的Word格式是二进制格式，因此，版本控制系统是没法跟踪
+Word文件的改动的，前面我们举的例子只是为了演示，如果要真正使用版本控制系统
+，就要以纯文本方式编写文件。
+
+使用Windows的童鞋要特别注意：
+
+千万不要使用Windows自带的记事本编辑任何文本文件。原因是Microsoft开发记事本的团队使用了一
+个非常弱智的行为来保存UTF-8编码的文件，他们自作聪明地在每个文件开头添加了0xefbbbf（十六进
+制）的字符，你会遇到很多不可思议的问题，比如，网页第一行可能会显示一个“?”，明明正确的程序
+一编译就报语法错误，等等，都是由记事本的弱智行为带来的。建议你下载Notepad++代替记事本，不
+但功能强大，而且免费！记得把Notepad++的默认编码设置为UTF-8 without BOM即可
+
+
+1.初始化一个Git仓库，使用git init命令。
+
+添加文件到Git仓库，分两步：
+
+    使用命令git add <file>添加到仓库，注意，可反复多次使用，添加多个文件；
+    使用命令git commit -m <message>提交到仓库，完成。-m后面输入的是本次提交的说明
+
+为什么Git添加文件需要add，commit一共两步呢？因为commit可以一次提交很多文件，所以你
+可以多次add不同的文件，比如：
+
+$ git add file1.txt
+$ git add file2.txt file3.txt
+$ git commit -m "add 3 files."
+
+
+2.要随时掌握工作区的状态，使用git status命令。
+
+    如果git status告诉你有文件被修改过，用git diff file.txt可以查看修改内容。
+	
+
+
+
+3.
+在Git中，用HEAD表示当前版本，也就是最新的提交1094adb...（注意我的提交ID和你的
+肯定不一样），上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本
+写100个^比较容易数不过来，所以写成HEAD~100。
+现在，我们要把当前版本append GPL回退到上一个版本add distributed，就可以使用git reset命令：
+$ git reset --hard HEAD^
+HEAD is now at e475afc add distributed
+然我们用git log再看看现在版本库的状态：
+最新的那个版本append GPL已经看不到了！好比你从21世纪坐时光穿梭机来到了19世纪，想再回
+去已经回不去了，肿么办？
+解决：git reflog
+Git的版本回退速度非常快，因为Git在内部有个指向当前版本的HEAD指针，当你回退
+版本的时候，Git仅仅是把HEAD指向改了
+
+
+现在总结一下：
+
+    HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命
+	令git reset --hard commit_id。
+
+    穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
+	(如果嫌输出信息太多，看得眼花缭乱的，可以试
+	试加上--pretty=oneline参数:git log --pretty=oneline)
+
+    要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本
+	
+	
+	
+4.
+a)工作区（Working Directory）
+就是你在电脑里能看到的目录，比如我的learngit文件夹就是一个工作区
+b)工作区有一个隐藏目录.git，这个不算工作区，而是Git的版本库。
+Git的版本库里存了很多东西，其中最重要的就是称为stage（或者叫index）的暂存区，还有Git为
+我们自动创建的第一个分支master，以及指向master的一个指针叫HEAD。
+c)前面讲了我们把文件往Git版本库里添加的时候，是分两步执行的：
+第一步是用git add把文件添加进去，实际上就是把文件修改添加到暂存区；
+第二步是用git commit提交更改，实际上就是把暂存区的所有内容提交到当前分支。
+因为我们创建Git版本库时，Git自动为我们创建了唯一一个master分支，所以，现
+在，git commit就是往master分支上提交更改。
+你可以简单理解为，需要提交的文件修改通通放到暂存区，然后，一次性提交暂存区的所有修改。
+
+git add把文件从工作区>>>>暂存区，git commit把文件从暂存区>>>>仓库，
+
+git diff查看工作区和暂存区差异，
+
+git diff --cached查看暂存区和仓库差异，
+
+git diff HEAD 查看工作区和仓库的差异，如：git diff HEAD -- readme.txt 
+
+
+命令git checkout -- readme.txt：（git checkout -- file命令中的--很重要，没有--，就变成
+了“切换到另一个
+分支”的命令，我们在后面的分支管理中会再次遇到git checkout命令。）
+意思就是，把readme.txt文件在工作区的修改全部撤销，这里有两种情况：
+
+一种是readme.txt自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；
+
+一种是readme.txt已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。
+
+总之，就是让这个文件回到最近一次git commit或git add时的状态。
+
+
+又到了小结时间。
+
+场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令git checkout -- file。
+
+场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第
+一步用命令git reset HEAD <file>，就回到了场景1，第二步按场景1操作。
+
+场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，参考版本回退一节，不过前提是没
+有推送到远程库。
+
+
+原来的git checkout 可以使用 git restore 代替
+
+原来的git reset HEAD 可以使用 git restore --staged 代替
+
+最新版的git提示都已经更换成了restore
+
+从暂存区恢复工作区，
+
+git resotre --worktree readme.txt
+
+从master恢复暂存区 
+
+git restore --staged readme.txt
+
+从master同时恢复工作区和暂存区
+
+git restore --source=HEAD --staged --worktree readme.txt
+
+
+
+
+
+一般情况下，你通常直接在文件管理器中把没用的文件删了，或者用rm命令删了：
+$ rm test.txt
+这个时候，Git知道你删除了文件，因此，工作区和版本库就不一致了，git st
+atus命令会立刻告诉你哪些文件被删除了
+
+现在你有两个选择，一是确实要从版本库中删除该文件，那就用命令git rm删掉，并且git commit：
+$ git rm test.txt
+rm 'test.txt'
+
+$ git commit -m "remove test.txt"
+[master d46f35e] remove test.txt
+ 1 file changed, 1 deletion(-)
+ delete mode 100644 test.txt
+ 
+ 另一种情况是删错了，因为版本库里还有呢，所以可以很轻松地把误删的文件恢复到最新版本：
+$ git checkout -- test.txt
+git checkout其实是用版本库里的版本替换工作区的版本，无论工作区是修改还是删除，都可以“一键还原”。
+
+ 注意：从来没有被添加到版本库就被删除的文件，是无法恢复的！
+ 
+ 评论：
+ 1.当你要删除文件的时候，可以采用命令：rm test.txt
+
+这个时候（也就是说这个时候只执行了rm test.txt）有两种情况
+
+第一种情况:的确要把test.txt删掉，那么可以执行 git rm test.txt git commit -m "remove test.txt" 然
+后文件就被删掉了
+
+第二种情况:删错文件了，不应该删test.txt，注意这时只执行了rm test.txt，还没 有提交，所以可以执行git checkout test.txt将文件恢复。
+
+并不是说执行完git commit -m "remove test.txt"后还能用checkout恢复，commit之后版本库里的文件
+也没了，自然没办法用checkout恢复，而是要用其他的办法
+
+2（参考重点）.如果你用的rm删除文件，那就相当于只删除了工作区的文件，如果想要恢复，直
+接用git checkout -- <file>就可以 2.如果你用的是git rm删除文件，那就相当
+于不仅删除了文件，而且还添加到了暂存区，需要先git reset HEAD <file>，然后
+再git checkout -- <file> 3.如果你想彻底把版本库的删除掉，先git rm，再git commit 就ok了
+
+3.第一种情况:的确要把test.txt删掉，那么可以执行 git rm test.txt git commit -m "remove test.txt" 
+文件被删除，且删除记录上传本地库
+
+第二种情况:误删文件，想恢复，这时候还没有commit -m "remove test.txt"，执行git checkout test.txt将
+文件恢复。
+
+如果执行完git commit -m "remove test.txt"后就不能用checkout恢复了，得用git reset --hard HEAD^
+
+
+ 4.因为你用的是【git rm】命令来删除的文件，这个命令是删除了Git暂存区的test.txt文件，此
+ 时你再用【git checkout -- <filename>】命令的话，Git就会提示你匹配不到文件。
+
+。【git checkout -- <filename>】：是将工作区恢复成暂存区样子；
+
+你必须先使用【git reset  <file>】命令，将删除的文件从Git版本库拉回到你的暂存区中，然后
+
+再使用【git checkout -- <filename>】命令来将该文件拉回到你的工作区中。
+
+* 请注意1：【git reset  HEAD <file>】命令，如果HEAD上也没有这个test.txt文件的话，执行
+该命令后Git同样会报错，提示你匹配不到文件。原因是你按照廖老师的学习步骤学习的：
+
+【git rm <file>】删除文件 → 【git add 'add test.txt'】暂存本次删除申请 → 【git commi
+t -m'remove test.txt'】提交本次删除申请到HEAD
+
+所以，如果你直接使用命令【git reset  HEAD test.txt】想想问什么会提示你匹配不到文件呢？因
+为现在HEAD上已经没有这个test.txt文件了！
+
+怎么办呢？我们使用下面的命令顺序可以找回删除的文件：
+
+【git log --pretty=oneline】查看提交的版本日志 → 【git reset commitID test.txt】这里的c
+ommitID使用的是'add test.txt'这次的提交ID → 【git checkout -- test.txt】将文件从暂存区拿
+回到工作区
+
+* 请注意2：如果在'add test.txt'中间对test.txt有多次修改，并且没有提交被Git管理起来的话，这
+些修改就都丢失了！
+
+ 
+ 
+
+
+
+
+5.
+a)现在，我们根据GitHub的提示，在本地的learngit仓库下运行命令：
+
+$ git remote add origin git@github.com:michaelliao/learngit.git
+请千万注意，把上面的michaelliao替换成你自己的GitHub账户名，否则，你在本地关联的就是
+我的远程库，关联没有问题，但是你以后推送是推不上去的，因为你的SSH Key公钥不在我的账户列表中。
+
+添加后，远程库的名字就是origin，这是Git默认的叫法，也可以改成别的，但是origin这个名字
+一看就知道是远程库。
+
+下一步，就可以把本地库的所有内容推送到远程库上：
+
+$ git push -u origin master
+
+
+b)把本地库的内容推送到远程，用git push命令，实际上是把当前分支master推送到远程。
+
+由于远程库是空的，我们第一次推送master分支时，加上了-u参数，Git不但会把本地的master分
+支内容推送的远程新的master分支，还会把本地的master分支和远程的master分支关联起来，在
+以后的推送或者拉取时就可以简化命令。
+
+
+
+
+小结
+
+要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git；
+
+关联后，使用命令git push -u origin master第一次推送master分支的所有内容；
+
+此后，每次本地提交后，只要有必要，就可以使用命令git push origin master推送最新修改；
+
+分布式版本系统的最大好处之一是在本地工作完全不需要考虑远程库的存在，也就是有没有联网都可
+以正常工作，而SVN在没有联网的时候是拒绝干活的！当有网络的时候，再把本地提交推送一下就完成
+了同步，真是太方便了！
+
+
+6.你也许还注意到，GitHub给出的地址不止一个，还可以用https://github.com/michaelliao/gitskills.git这
+
+样的地址。实际上，Git支持多种协议，默认的git://使用ssh，但也可以使用https等其他协议。
+
+使用https除了速度慢以外，还有个最大的麻烦是每次推送都必须输入口令，但是在某些只开放http端口
+的公司内部就无法使用ssh协议而只能用https。
+
+小结
+
+要克隆一个仓库，首先必须知道仓库的地址，然后使用git clone命令克隆。
+git clone git@github.com:michaelliao/gitskills.git
+
+Git支持多种协议，包括https，但ssh协议速度最快。
+
+
+
+
+7.
+看手机相片！！！！！！
+
+
+
+Git鼓励大量使用分支：
+
+查看分支：git branch
+
+创建分支：git branch <name>
+
+切换分支：git checkout <name>或者git switch <name>
+
+创建+切换分支：git checkout -b <name>或者git switch -c <name>
+
+合并某分支到当前分支：git merge <name>
+
+删除分支：git branch -d <name>
+
+

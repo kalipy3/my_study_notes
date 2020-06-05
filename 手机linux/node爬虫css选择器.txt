@@ -1,0 +1,19 @@
+eg1:
+<div class="a" id="b">
+#b
+
+eg2:
+<div class="a" id="b">
+.a
+
+eg3:
+<div class="a" id="b">
+	<a href="" />
+</div>
+#b a
+#b >a直接a标签，即离得最近的
+
+总结：
+1.id用#表示
+2.class用.表示
+

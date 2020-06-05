@@ -1,0 +1,1 @@
+nproc命令代替或者apt install cpu
