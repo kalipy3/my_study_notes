@@ -1,0 +1,28 @@
+rm误删数据恢复.txt
+
+:Author: android
+:Email: android@localhost
+:Date: 2020-08-01 18:19
+
+
+
+1.apt-get install testdisk
+
+2.［Create］新建
+
+［Append］追加
+
+［No Log］不纪录
+选择[no log]
+
+3.选择[none]
+
+4.选择［Analyse］
+
+5.选择[Deep Search]
+
+6.红色的文件名称就是已经被删除的文件
+
+7.按键盘c选择被恢复的文件或文件夹，然后cd到被恢复文件所要存放的目标目录，再次按c，被恢复文件会被恢复并且存放在目标目录
+
+8.注意：在虚拟机上所有恢复方法几乎都无效，安卓linux有效，pc真机有效
