@@ -1,0 +1,21 @@
+python文档查看的最好方式.txt
+
+:Author: android
+:Email: android@localhost
+:Date: 2020-08-07 08:30
+
+python pydoc查看文档
+
+
+1、首先打开命令行，在dos窗口输入：
+python -m pydoc -p 4567
+-m pydoc表示打开pydoc模块，pydoc是查看python文档的首选工具；
+-p 4567表示在4567端口上启动server;
+
+2、然后在浏览器中访问http://localhost:4567/，此时应该可以看到python中所有的Modules
+
+3、按ctrl+f，输入selenium,定位到selenium文档的链接，然后点击进入到http://localhost:4567/selenium.html这个页面
+这就是selenium文档所在的位置了
+
+
+注意：支持pip与pip3等工具安装的第三方库
