@@ -1,0 +1,32 @@
+javacomplete2代码补全的坑.txt
+
+:Author: kalipy
+:Email: android@localhost
+:Date: 2020-08-09 09:13
+
+1.
+a)public class A extends Thread {
+    @Override//这里想要自动补全Thread类中的方法，必须在@Override后敲一个空格，然后再按cral-z(ctral-z是ycm的代码补全触发键，这个请看ycm文档自行设置快捷键
+}
+b)public class B extends Thread {
+    @Override ru//这里键入了ru后反而触发不了代码补全,所以请严格按照a)操作
+}
+
+2.关于gradle java项目的依赖的补全：
+vim打开补全不了的原因：
+a)javacomplete2每次打开gradle项目(即src同级目录存在build.gradle文件)的java文件时，都会自动执行ta自己的gradle任务，根据build.gradle中的依赖自动把依赖处理，并加到classpath中，使得依赖中的jar包也可以代码补全。而gradle在执行过程中，代码补全暂时会无效，产生让人以为是没法补全的错觉，所以，等一段时间就好了。//17行
+
+b)然而，a)步骤很大可以还是会报错，因为javacomplete2对gradle环境变量的读取很奇怪，你的/etc/profile中环境变量确实是没问题，但是，奇怪的是javacomplete2还是会说没有安装gradle,然后会去下载gradle，且下载99%会说网络错误，然后complete2报错后，代码补全也会失效。
+解决：
+    sudo vim /usr/kalipy/share/vim/vimrc
+    vimrc中配置gradle环境变量：let g:JavaComplete_GradleExecutable = '/home/kalipy/.sdkman/candidates/gradle/6.5/bin/gradle'（根据你自己的gradle路径来写
+
+
+3.关于maven java项目的依赖的补全：
+a)javacomplete2每次打开maven项目(只要src同级目录存在pom.xml即可),会自动处理pom.xml文件并且加到classpath，从而使得pom.xml的依赖包也可以代码补全，和17行一样，会造成让人误以为代码补全的错觉。
+
+b)想让maven的依赖可以补全的话，有两种方法：
+    1.把pom.xml放在src同级目录下
+    2.vimrc中配置pompath:let g:JavaComplete_PomPath = "/home/kalipy/j2se_thread/j2se_stud
+y/gg/projectName/pom.xml"
+
