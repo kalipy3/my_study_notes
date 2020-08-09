@@ -1,0 +1,36 @@
+git常用命令.txt
+
+:Author: android
+:Email: android@localhost
+:Date: 2020-08-09 12:46
+
+1.列出已有tag
+git tag
+git tag -l "v3.3.*"
+
+2.新建tag
+git tag v1.0
+git tag -a tagName -m "my tag 备注信息"//-m与git commit -m作用一样
+
+3.查看tag
+git show tagName//tagName一般是版本,vx.x.x
+
+4.给指定的某个commit号加tag
+git tag -a v1.2 9fceb02 -m "my tag"
+
+5.将tag同步到远程服务器
+使用git push origin [tagName]推送单个分支。
+git push origin v1.0
+
+推送本地所有tag，使用git push origin --tags。
+
+6.切换到某个tag
+git checkout tagName
+
+7.删除某个tag
+本地删除:
+    git tag -d v0.1.2 
+
+远端删除:
+    git push origin :refs/tags/<tagName>
+    git push origin :refs/tags/v0.1.2
