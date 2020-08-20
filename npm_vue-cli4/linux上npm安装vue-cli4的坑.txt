@@ -1,0 +1,68 @@
+linux上npm安装vue-cli4的坑.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2020-08-20 18:12
+
+准备:
+    npm速度慢解决方法
+        1.vim ~/.npmrc
+        2. .npmrc内容：
+            registry = https://registry.npm.taobao.org
+        3.cp ~/.npmrc /root/.
+
+    注意：千万不要用cnpm，莫名其妙的问题一大堆！！
+
+
+1.手机linux安装vue-cli4：
+    1.完成上述准备工作
+
+    2.sudo npm install -g @vue/cli
+
+    3.安装成功
+
+    4.尝试运行vue create testapp创建vue项目
+        恭喜你，报错了：
+            Vue CLI v4.5.4
+            ✨  Creating project in /home/android/vue_study/testappf.
+            ⚙️  Installing CLI plugins. This might take a while...
+            npm ERR! code EUNSUPPORTEDPROTOCOL
+            npm ERR! Unsupported URL Type "npm:": npm:vue-loader@^16.0.0-beta.3
+
+    5.解决方法：
+        别用npm了，用yarn
+        
+        linux上yarn安装:
+           1. curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+           2. echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+           3. sudo apt-get update && sudo apt-get install yarn
+
+    6.vue create testapp
+        1.选择yarn构建vue项目
+            Vue CLI v4.5.4
+            ? Please pick a preset: Manually select features
+            ? Check the features needed for your project: Choose Vue version, Babel
+            ? Choose a version of Vue.js that you want to start the project with 3.x (Preview)
+            ? Where do you prefer placing config for Babel, ESLint, etc.? In package.json
+            ? Save this as a preset for future projects? No
+            ? Pick the package manager to use when installing dependencies:
+            Use Yarn
+            ❯ Use NPM
+
+        2.成功
+
+2.pc端linux安装vue-cli4:
+    方法一：
+        上述手机的方法也适用，so,懂？
+
+    方法二：
+        1.完成文章开头的准备工作
+        
+        2.使用问题一大堆的cnpm
+
+        3.sudo cnpm install -g @vue/cli
+
+        4.运行vue create testapp尝试创建vue项目
+            恭喜再次报错：
+                解决方法：
+                    别用npm，用yarn构建vue项目
