@@ -38,6 +38,21 @@ ycm找不到c和c++的头文件问题
              ]
 
     2.如果你是用makefile管理gcc的编译，请在编译前合理配置编译规则！
+        比如：
+            原本的makefile中的头文件的配置：
+                INCLUDES=-I. \
+                -I../../Libraries/CMSIS/Device/ST/STM32F4xx/Include \
+                -I../../Utilities/STM32F429I-Discovery \
+                -I../../Libraries/CMSIS/Include \
+                -I../../Libraries/STM32F4xx_StdPeriph_Driver/inc
+
+             现在的配置可以改为(也可以不改，继续用原来的配置)：
+                INCLUDES=-I. \
+                -I../../Projects/LED/gg 
+
+          注意：makefile中的头文件配置，现在既可以用原来的，也可以用现在的，两者选任何一个都行。
+
+            
 
 完～
 
