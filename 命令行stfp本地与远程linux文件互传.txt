@@ -1,0 +1,11 @@
+命令行stfp本地与远程linux文件互传.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2020-08-28 09:48
+
+1.连接进入远程终端
+sftp sftp://android@192.168.43.1
+
+2.get 文件名
+默认会下载到本地当前目录下
