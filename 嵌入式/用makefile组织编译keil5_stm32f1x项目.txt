@@ -1,0 +1,226 @@
+用makefile组织编译keil5_stm32f1x项目.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2020-09-09 21:03
+
+1.按照正点原子网的开发指南库函数版pdf教程，创建基本项目结构如下：
+    .
+├── Core
+│   ├── core_cm3.c
+│   ├── core_cm3.h
+│   └── startup_stm32f10x_hd.s
+├── Makefile
+├── Stm32f10xfwLib
+│   ├── inc
+│   │   ├── misc.h
+│   │   ├── stm32f10x_adc.h
+│   │   ├── stm32f10x_bkp.h
+│   │   ├── stm32f10x_can.h
+│   │   ├── stm32f10x_cec.h
+│   │   ├── stm32f10x_crc.h
+│   │   ├── stm32f10x_dac.h
+│   │   ├── stm32f10x_dbgmcu.h
+│   │   ├── stm32f10x_dma.h
+│   │   ├── stm32f10x_exti.h
+│   │   ├── stm32f10x_flash.h
+│   │   ├── stm32f10x_fsmc.h
+│   │   ├── stm32f10x_gpio.h
+│   │   ├── stm32f10x_i2c.h
+│   │   ├── stm32f10x_iwdg.h
+│   │   ├── stm32f10x_pwr.h
+│   │   ├── stm32f10x_rcc.h
+│   │   ├── stm32f10x_rtc.h
+│   │   ├── stm32f10x_sdio.h
+│   │   ├── stm32f10x_spi.h
+│   │   ├── stm32f10x_tim.h
+│   │   ├── stm32f10x_usart.h
+│   │   └── stm32f10x_wwdg.h
+│   └── src
+│       ├── misc.c
+│       ├── stm32f10x_adc.c
+│       ├── stm32f10x_bkp.c
+│       ├── stm32f10x_can.c
+│       ├── stm32f10x_cec.c
+│       ├── stm32f10x_crc.c
+│       ├── stm32f10x_dac.c
+│       ├── stm32f10x_dbgmcu.c
+│       ├── stm32f10x_dma.c
+│       ├── stm32f10x_exti.c
+│       ├── stm32f10x_flash.c
+│       ├── stm32f10x_fsmc.c
+│       ├── stm32f10x_gpio.c
+│       ├── stm32f10x_i2c.c
+│       ├── stm32f10x_iwdg.c
+│       ├── stm32f10x_pwr.c
+│       ├── stm32f10x_rcc.c
+│       ├── stm32f10x_rtc.c
+│       ├── stm32f10x_sdio.c
+│       ├── stm32f10x_spi.c
+│       ├── stm32f10x_tim.c
+│       ├── stm32f10x_usart.c
+│       └── stm32f10x_wwdg.c
+├── stm32_flash.ld
+└── User
+    ├── main.c
+    ├── stm32f10x_conf.h
+    ├── stm32f10x.h
+    ├── stm32f10x_it.c
+    ├── stm32f10x_it.h
+    ├── system_stm32f10x.c
+    └── system_stm32f10x.h
+
+
+2.注意：比正点原子的教程多一步，即把stm32_flash.ld拷贝到与User同级目录下，请看上面的树形结构图
+
+
+3.编写makefile如下：
+    #!!!=== 交叉编译器
+    CROSS_COMPILE = arm-none-eabi-
+    CC  = $(CROSS_COMPILE)gcc
+    AS  = $(CROSS_COMPILE)gcc -x assembler-with-cpp
+    CP  = $(CROSS_COMPILE)objcopy
+    AR  = $(CROSS_COMPILE)ar
+    SIZE  = $(CROSS_COMPILE)size
+    HEX = $(CP) -O ihex
+    BIN = $(CP) -O binary -S
+    
+    MKDIR_P ?= mkdir -p
+    
+    #!!!=== 目标文件名，注：下面会生成$(target).hex等文件
+    target = target
+    
+    #!!!=== 是否调试版本，如是，设置为y，反之，为n
+    debug  = y
+    
+    #!!!=== 编译目录
+    BUILD_DIR = build
+    
+    #!!!=== 头文件目录，在当前目录下搜索所有目录，将其当成头文件目录
+    INC := $(shell find ./ -type d)
+    INCDIRS := $(addprefix -I, $(INC))
+    
+    ######################################
+    # C源码文件
+    #注：find会递归查找项目目录所有.c文件，如c文件不必要，则要删除，否则可能会编译出错
+    C_SOURCES =  $(shell find ./ -name '*.c')
+    
+    #!!!=== 启动汇编文件
+    ASM_SOURCES = $(shell find ./ -name '*.s') #app/startup_stm32f103xe.s
+    # TODO：其它目录在此列出
+    
+    # float-abi 如不支持，则不填写
+    FLOAT-ABI = 
+    FPU = 
+    
+    # 目标芯片特有编译指令
+    MCU = -mcpu=cortex-m3 -mthumb $(FPU) $(FLOAT-ABI)
+    
+    # c编译标志
+    CFLAGS = $(MCU) $(DEFS) $(INCDIRS) -std=c99 -Wall -Wfatal-errors \
+             -MMD -fdata-sections -ffunction-sections
+    ASFLAGS = $(CFLAGS) $(AS_DEFS)
+    
+    # debug或release版本选择
+    ifeq ($(debug), y)
+        CFLAGS += -g -gdwarf-2
+    else
+        CFLAGS += -O2 -s # 或者-Og
+    endif
+    
+    # AS宏定义
+    AS_DEFS = 
+    
+    #!!!=== C宏定义
+    # STM32F103必须定义USE_STDPERIPH_DRIVER和STM32F10X_HD
+    # USE_FREERTOS 使用freertos系统
+    # USE_UCOSII   使用ucos-ii系统
+    # OS_SUPPORT   使用了OS（在GUI源码中使用到此宏）
+    DEFS_STR += STM32F10X_HD USE_STDPERIPH_DRIVER OS_SUPPORT USE_FREERTOS
+    DEFS     := $(addprefix -D, $(DEFS_STR))
+    
+    #!!!=== 链接脚本文件
+    LDSCRIPT = $(shell find ./ -name '*.ld') #app/STM32F103XE_FLASH.ld
+    
+    #!!!=== 静态库名称
+    LIBS = -lc -lm -lnosys 
+    LIBS += $(shell find ./ -name '*.a') # STemWin526_CM3_OS_GCC.a
+    # 其它库目录
+    LIBDIR = 
+    # 链接标志
+    #  添加-specs=rdimon.specs会造成close/seek与nosys库冲突
+    # nano库实现相应C库的功能，但体积会更小
+    LDFLAGS = $(MCU) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) \
+              -Wl,-Map=$(BUILD_DIR)/$(target).map,--cref -Wl,--gc-sections \
+              -specs=nosys.specs -specs=nano.specs 
+    
+    ifeq ($(V),1)
+    Q=
+    NQ=true
+    else
+    Q=@
+    NQ=echo
+    endif
+    
+    # default action: build all
+    all: $(BUILD_DIR)/$(target).out $(BUILD_DIR)/$(target).hex $(BUILD_DIR)/$(target).bin
+    
+    #######################################
+    ## 目标文件规则（由.c .s产生.o的规则）
+    OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
+    vpath %.c $(sort $(dir $(C_SOURCES)))
+    OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
+    vpath %.s $(sort $(dir $(ASM_SOURCES)))
+    
+    DEPS := $(OBJECTS:.o=.d)
+    
+    # 编译.c .s文件
+    $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
+            @$(NQ) "Compiling: " $(basename $(notdir $@)).c
+            $(Q)$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $
+    < -o $@
+    
+    $(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
+            @$(NQ) "Assembling: " $(basename $(notdir $@)).s
+            $(Q)$(AS) -c $(CFLAGS) $< -o $@
+    
+    # 生成out hex bin文件
+    $(BUILD_DIR)/$(target).out: $(OBJECTS) Makefile
+            @$(NQ) "linking..."
+            @$(NQ) "Creating file..." $(notdir $@)
+            $(Q)$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+            $(Q)$(SIZE) $@
+    
+    $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.out | $(BUILD_DIR)
+            @$(NQ) "Creating hex file..." $(notdir $@)
+            $(Q)$(HEX) $< $@
+            $(Q)mv $@ .
+    
+    $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.out | $(BUILD_DIR)
+            @$(NQ) "Generating bin file..." $(notdir $@)
+            $(Q)$(BIN) $< $@
+            #$(Q)mv $@ .
+    
+    $(BUILD_DIR):
+            $(Q)$(MKDIR_P) $@
+    
+    ## 清理文件
+    clean:
+            @$(NQ) "Cleaning..."
+            $(Q)@-rm -fR .dep $(BUILD_DIR)
+            $(Q)@find . -iname '*.o' -o -iname '*.bak' -o -iname '*.d' | xargs rm -f
+    
+    ## 烧录命令
+    flash:
+            st-flash write $(BUILD_DIR)/$(target).bin 0x8000000
+    ## 擦除命令
+    erase:
+            st-flash erase
+    
+    .PHONY: all clean flash erase
+    
+    ## 依赖文件
+    -include $(DEPS)
+   
+
+4.make编译，成功，完～
