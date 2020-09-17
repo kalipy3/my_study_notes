@@ -1,0 +1,218 @@
+html快捷写法.txt
+
+:Author: android
+:Email: android@localhost
+:Date: 2020-08-04 11:51
+
+Emmet的html语法
+
+元素
+1.在编辑器中输入元素名称，即可自动补全生成 HTML 标签，即使不是标准的 HTML 标签。
+2.输入：! 或者 html:5 或者 html:4s 或者 html:4t 将自动补全html基本结构
+
+嵌套操作
+1.使用“>”生成子元素
+
+// 输入
+div>ul>li
+
+// 按下TAB键
+<div>
+    <ul>
+        <li></li>
+    </ul>
+</div>
+
+
+2.使用“+”生成兄弟元素
+
+// 输入
+div+p+bq
+
+// 按下TAB键
+<div></div>
+<p></p>
+<blockquote></blockquote>
+
+
+3.使用“^”生成父元素
+
+// 输入
+div+div>p>span+em^bq
+
+// 按下TAB键
+<div></div>
+<div>
+    <p><span></span><em></em></p>
+    <blockquote></blockquote>
+</div>
+4.使用“*”生成多个相同元素
+
+// 输入
+div>ul>li*5
+
+// 按下TAB键
+<div>
+    <ul>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+</div>
+5.使用“()”将元素分组
+
+// 输入
+// "+" 后面的元素与括号中的第一个元素属于兄弟关系
+div>(header>ul>li*2)+footer>p
+
+//按下TAB键
+<div>
+    <header>
+        <ul>
+            <li></li>
+            <li></li>
+        </ul>
+    </header>
+    <footer>
+        <p></p>
+    </footer>
+</div>
+
+
+属性操作
+1.id与class：元素与 id 属性值之间用 “#” 分隔，与 class 属性值之间用 “.” 分隔
+
+// 输入
+div#header+div.page+div#footer.class1.class2.class3
+
+// 按下TAB键
+<div id="header"></div>
+<div class="page"></div>
+<div id="footer" class="class1 class2 class3"></div>
+2.使用“[]”标记其他属性
+
+// 输入
+td[title='hello' colspan=3]
+
+// 按下TAB键
+<td title="hello" colspan="3"></td>
+3.用“$”符号实现1到n的自动编号（“*”实现多个元素）
+
+// 输入
+li.item$*3
+
+// 按下TAB键
+<li class="item1"></li>
+<li class="item2"></li>
+<li class="item3"></li>
+可在 “$” 后添加 “@n” 修改编号的起始值为n。
+
+// 输入
+li.item$@3*3
+
+// 按下TAB键
+<li class="item3"></li>
+<li class="item4"></li>
+<li class="item5"></li>
+可在 “$” 后添加 “@-” 修改编号的方向。
+
+// 输入
+li.item$@-3*3
+
+// 按下TAB键
+<li class="item5"></li>
+<li class="item4"></li>
+<li class="item3"></li>
+4.用“{}”添加文本内容
+
+// 输入
+a[href=me.htm]{click me}
+
+// 按下TAB键
+<a href="me.htm">click me</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+HTML快捷写法大全
+父子用>  [Ul>li*3]
+
+<ul>
+    <li></li>
+    <li></li>
+    <li></li>
+</ul>
+
+兄弟之间用+,也可以省写  [p+span]，[ul+]
+
+<p></p><span></span>
+
+<ul>
+    <li></li>
+</ul>
+
+寻找父亲或者上级用^,反一层用一个，反两层用两个  [div>h2+ul>li*3^span]
+
+<div>
+    <h2></h2>
+    <ul>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+    <span></span></div>
+
+属性用[], a[title="aaa"]
+
+<a href="" title="aaa"></a>
+
+$符号是自动编辑 box>ul>li.items$*10
+
+<box>
+    <ul>
+        <li class="items1"></li>
+        <li class="items2"></li>
+        <li class="items3"></li>
+        <li class="items4"></li>
+        <li class="items5"></li>
+        <li class="items6"></li>
+        <li class="items7"></li>
+        <li class="items8"></li>
+        <li class="items9"></li>
+        <li class="items10"></li>
+    </ul>
+</box>
+
+内容用{} .box>ul>li{这是第$行数据}*10
+
+<div class="box">
+    <ul>
+        <li>这是第1行数据</li>
+        <li>这是第2行数据</li>
+        <li>这是第3行数据</li>
+        <li>这是第4行数据</li>
+        <li>这是第5行数据</li>
+        <li>这是第6行数据</li>
+        <li>这是第7行数据</li>
+        <li>这是第8行数据</li>
+        <li>这是第9行数据</li>
+        <li>这是第10行数据</li>
+    </ul>
+</div>
