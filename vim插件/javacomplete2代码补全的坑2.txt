@@ -1,0 +1,22 @@
+javacomplete2代码补全的坑2.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2020-09-18 23:16
+
+问题：
+    javacomplete2每次输入一个单词后，按了空格键后都会弹出一个scope xxx not found的错误，并且tags无效了，即使还可以自动补全代码
+
+解决：
+1.sudo vim /usr/share/vim/vimrc
+
+2.找到如下内容：
+    "输入2个字符后自动补全
+    let g:ycm_min_num_identifier_candidate_chars = 2
+    let g:ycm_semantic_triggers =  {
+                            \ 'c,cpp,python,go,erlang,perl': ['re!\w{2}'],
+                            \ 'cs,lua,css,html,javascript,nodejs,node,java': ['re!\w{2}
+    '],
+                            \ }
+
+3.把18行的java删除，因为ycm的输入2个字符后自动补全与javacomplete2的冲突，相覆盖
