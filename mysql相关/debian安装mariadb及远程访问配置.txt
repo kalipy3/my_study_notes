@@ -16,6 +16,9 @@ debian安装mariadb及远程访问配置.txt
 4.进入mysql数据库：
     use mysql;
 
+4.5.设置root用户密码：(此步骤一定不能少，不然客户端连接不上)
+    alter user 'root'@'localhost' identified  by 'Abcd1234';
+
 5.建立用户和密码,并授权远程访问:
     grant all privileges on *.* to root@'%' identified by 'password';
 
@@ -24,3 +27,12 @@ debian安装mariadb及远程访问配置.txt
 
 7.查看用户信息: 
     select user,host,password from user; 
+
+注意！！：
+    步骤4.5
+
+    用客户端gui连接一定注意，当用localhost连接时，报错：
+        2002 - Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2 "没有那个文件或目录")
+
+    解决：
+        把localhost改为127.0.0.1即可成功
