@@ -1,0 +1,26 @@
+debian安装mariadb及远程访问配置.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2020-09-18 17:58
+
+1.安装：
+    sudo apt install mariadb-server 
+
+2.开启server:
+    sudo service mysql start
+
+3.命令行连接mariadb:
+    sudo mysql -u root -p
+
+4.进入mysql数据库：
+    use mysql;
+
+5.建立用户和密码,并授权远程访问:
+    grant all privileges on *.* to root@'%' identified by 'password';
+
+6.刷新权限,使之生效:
+    flush privileges; 
+
+7.查看用户信息: 
+    select user,host,password from user; 
