@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>websocket</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      // 浏览器提供 WebSocket 对象
+      var ws = new WebSocket('ws://localhost:3000')
+      // 发送
+      ws.onopen = function() {
+        //ws.send('hello')
+        ws.send('SLight_led1E')
+      }
+      // 接收
+      ws.onmessage = function(mes) {
+        alert(mes.data)
+        if (mes.data === 'hello') {
+          ws.close()
+        }
+      }
+    </script>
+  </body>
+</html>
+

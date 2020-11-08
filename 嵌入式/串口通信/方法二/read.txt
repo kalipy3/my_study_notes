@@ -1,0 +1,17 @@
+read.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2020-11-08 12:39
+
+websocket方式
+
+安装nodejs-websocket
+
+npm install nodejs-websocket
+
+cnpm install serialport
+
+
+
+https://github.com/qianlongdoit/serialPortDemo
