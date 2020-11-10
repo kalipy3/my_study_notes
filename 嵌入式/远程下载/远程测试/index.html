@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+form{
+  margin: 30px auto;
+  width: 35%;
+}
+    </style>
+  </head>
+  <body>
+    <br>
+    <form class="form">
+      <fieldset>
+        <legend>wobsocket 控制</legend>
+        <br>
+        <br>
+        <div>
+          <input type="button" onclick="clickDend('正在下载，请等待，下载过程中请不要再次点击或刷新页面!!')" value="下载hex到开发板">
+        </div>
+
+        <br>
+        <ul id="content"></ul>
+        <input type="text" placeholder="请输入发送的消息" class="message" id="message"/>
+        <input type="button" value="发送" id="send" class="connect"/>
+        <input type="button" value="连接" id="connect" class="connect"/>
+      </fieldset>
+    </form>
+    <script>
+      var oUl=document.getElementById('content');
+      var oConnect=document.getElementById('connect');
+      var oSend=document.getElementById('send');
+      var oInput=document.getElementById('message');
+      var ws=null;
+      oConnect.onclick=function(){
+        ws=new WebSocket('ws://localhost:5000');
+        ws.onopen=function(){
+          oUl.innerHTML+="<li>客户端已连接</li>";
+        }
+        ws.onmessage=function(evt){
+          oUl.innerHTML+="<li>"+evt.data+"</li>";
+        }
+        ws.onclose=function(){
+          oUl.innerHTML+="<li>客户端已断开连接</li>";
+        };
+        ws.onerror=function(evt){
+          oUl.innerHTML+="<li>"+evt.data+"</li>";
+
+        };
+      };
+      oSend.onclick=function(){
+        if(ws){
+          ws.send(oInput.value);
+        }
+      }
+      function clickDend(val){
+        console.log(val)
+        if(ws){
+          //            ws.send('010500000000CDCA,0105000100009C0A,0105000200006C0A,0105000300003DCA');
+          ws.send(val);
+        }
+      }
+    </script>
+  </body>
+</html>
