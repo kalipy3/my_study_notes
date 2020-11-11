@@ -28,6 +28,14 @@ form{
         <input type="button" value="连接" id="connect" class="connect"/>
       </fieldset>
     </form>
+
+    <h1>hex文件上传</h1>
+    <!--表单上传文件时，需要改变属性enctype为multipart/form-data-->
+    <form action="http://127.0.0.1:3000/imgUpload" method="post" enctype="multipart/form-data">
+      <input type="file" name="imgfile">
+      <button type="submit">上传</button>
+    </form>
+
     <script>
       var oUl=document.getElementById('content');
       var oConnect=document.getElementById('connect');
