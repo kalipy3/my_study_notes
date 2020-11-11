@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+form{
+  margin: 30px auto;
+  width: 35%;
+}
+    </style>
+  </head>
+  <body>
+    <br>
+    <form class="form">
+      <fieldset>
+        <legend>socket.io 控制</legend>
+        <br>
+        <br>
+        <div>
+          <input type="button" onclick="clickDend({type:'downloadhex',msg:'正在下载，请等待，下载过程中请不要再次点击或刷新页面!!'})" value="下载hex到开发板">
+        </div>
+
+        <br>
+        <ul id="content"></ul>
+        <input type="text" placeholder="请输入发送的消息" class="message" id="message"/>
+        <input type="button" value="发送" id="send" class="connect"/>
+        <input type="button" value="连接" id="connect" class="connect"/>
+        <input type="button" value="查看开发板(实时摄像头)" id="watch" class="connect"/>
+      </fieldset>
+    </form>
+
+    <h5>hex文件上传(上传后必须重新连接！！！)</h5>
+    <!--表单上传文件时，需要改变属性enctype为multipart/form-data-->
+    <form action="/imgUpload" method="post" enctype="multipart/form-data">
+      <input type="file" name="imgfile">
+      <button type="submit">上传</button>
+    </form>
+
+
+        <div class="localdownload">
+            <a href="/imgDownload">查看开发板(拍照并下载jpg图片，请等15s)</a>
+        </div>
+        <style>
+            .localdownload{
+                background: skyblue;
+                text-align: center;
+                margin-bottom: 200px;
+                height: 80px;
+                line-height: 80px;
+            }
+            .localdownload a{
+                color: #fff;
+                text-decoration: none;
+            }
+        </style>
+
+
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+      var oUl=document.getElementById('content');
+      var oConnect=document.getElementById('connect');
+      var oSend=document.getElementById('send');
+      var oInput=document.getElementById('message');
+      var oWatch=document.getElementById('watch');
+      var socket=null;
+      oConnect.onclick=function(){
+        socket = io('http://127.0.0.1:3000')
+        oUl.innerHTML+="<li>连接成功</li>";
+        socket.on('downloadfail', data => {
+          oUl.innerHTML+="<li>"+ data +"</li>";
+        })
+        socket.on('downloadok', data => {
+          oUl.innerHTML+="<li>"+ data +"</li>";
+        });
+        socket.on('watch', data => {
+          oUl.innerHTML+="<li>"+ data +"</li>";
+        });
+        //       ws.onmessage=function(evt){
+        //         oUl.innerHTML+="<li>"+evt.data+"</li>";
+        //       }
+        //       ws.onclose=function(){
+        //         oUl.innerHTML+="<li>客户端已断开连接</li>";
+        //       };
+      };
+      oSend.onclick=function(){
+        if(socket){
+          socket.emit("sendmsg", oInput.value)
+        }
+      }
+      function clickDend(val){
+        console.log(val)
+        oUl.innerHTML+="<li>"+ val.msg +"</li>";
+        if(socket){
+          socket.emit('downloadhex', val)
+        }
+      }
+      oWatch.onclick=function(){
+        if(socket){
+          console.log("watch..")
+          socket.emit("watch", "watch..")
+        }
+      }
+
+    </script>
+  </body>
+</html>
