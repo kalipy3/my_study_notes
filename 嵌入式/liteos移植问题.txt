@@ -1,0 +1,34 @@
+read.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2020-11-03 01:27
+
+stm32f4xx liteos移植：
+注意事项:
+    1.arch.mk文件中，cortex-m3要根据自己的芯片来改，如cortex-m3,cortex-m4,cortex-m7
+        # ASM sources
+        ASM_SOURCES_S +=  \
+        ../Middlewares/LiteOS/arch/arm/arm-m/cortex-m3/gcc/los_dispatch_gcc.S 
+
+
+    2.OS_CONFIG/target_config.h文件有两处需要适配您的开发环境进行调整：
+        1.如果是 M4 系列芯片是 stm32f4xx.h 文件
+            #include "stm32f1xx.h"改为#include "stm32f4xx.h"
+
+        2.将内存设置为匹配当前芯片 SRAM 大小，查找数据手册可以了解芯片内存大小
+            #define BOARD_SRAM_SIZE_KB  64
+
+
+
+    3.测试liteos是否正常工作时，请注意这个函数中的最后一个参数，HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);是GPIO_PIN_RESET,不是RESET!!!我找错花了一天时间！！！liteos一直我感觉应该成功了，也确实没有任何不成功的迹象，但是就是得不到预期结果凌晨1点多才发现，原来是这个函数的参数坑了我，气人啊！！
+
+
+   3.不接管中断
+        设置LOSCFG_PLATFORM_HWI 宏定义为 NO（该值默认为NO，一般无需修改，出于谨慎，移植过来还是要检查下）
+
+
+   4.liteos一旦启动成功，代码所有权归liteos管，所以LOS_start()执行后，后面的代码将不会被执行了！！所以不要再问刘某人为什么main()函数最后的while(1)不会被执行了
+
+
+   5.liteos的运行不依赖外部时钟，它只需要默认一定会开启的stm32芯片内部的内部时钟(cubemx的HAL_Delay函数也是用的这个内部时钟)即可正常工作，所以用Cubemx生成的空白template项目来移植都不会有任何问题！！
