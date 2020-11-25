@@ -15,8 +15,7 @@ ctags和cscope的java代码跳转.md
 
 ---
 ### ctags
-1. ctags -R
-
+1. `ctags -R`
 
 ---
 ### 进阶：比如我们不但要查看自己的src下的代码，关键还想查看j2ee各种框架和jdk的jar源码怎么办?解决：
@@ -37,7 +36,7 @@ unzip activemq-all-5.9.1.jar
 
 4. 在java项目根目录下
 ```
-find ./ -iname "*.java" > cscope.file
+find ./src -iname "*.java" > cscope.file //建议cscope的只加src，不要加入框架和jdk的源码，这样cscope用来搜索自己写的java代码,ctags用来搜索跳转框架和jdk的源码,不然cscope搜索到的东西实在太多了
 cscope -bkq -i cscope.file  //-i 指定输入文件
 ctags -R
 ```
