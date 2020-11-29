@@ -61,3 +61,13 @@ javacomplete2代码补全的坑3.md
 1. 有的类上面的问题4又可以自动导包
 
 
+### 问题(extends BaseDao<Book>中的`<xx>`会导致所有补全失效)
+```
+public class BookDaoImpl extends BaseDao<Book> implements BookDao
+
+```
+
+
+解决：
+    需要补全时把`<xx>`先注释掉，补全完了后再手动取消注释
+
