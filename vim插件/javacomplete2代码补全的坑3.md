@@ -71,3 +71,7 @@ public class BookDaoImpl extends BaseDao<Book> implements BookDao
 解决：
     需要补全时把`<xx>`先注释掉，补全完了后再手动取消注释
 
+    再如:
+        Page/*<Book>*/ page = new Page<Book>();
+        page.getPageSize();//这里想要补全需要把<Book>注释掉，补全后再加上,new Page<Book>的可以不用注释
+
