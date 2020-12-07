@@ -1,7 +1,0 @@
-jdb远程调试gradle构建的java或j2ee项目.txt
-
-:Author: kalipy
-:Email: kalipy@debian
-:Date: 2020-12-07 13:57
-
-见我的仓库jdbshell
