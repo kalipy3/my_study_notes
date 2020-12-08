@@ -261,3 +261,10 @@ public class UserDaoTest
 }
 
 ```
+
+推荐用gradle，可以更简单:
+```
+gradle test --debug-jvm//debug单元测试 5005是gradle debug默认开的端口
+
+jdbshell -attach 5005 -sourcepath ~/bak2/j2ee_study/kuansen_mybatis/src/test/java:/home/kalipy/bak2/j2ee_study/kuansen_mybatis/src/main/java:/home/kalipy/bak2/j2ee_study/kuansen_mybatis/gg
+```
