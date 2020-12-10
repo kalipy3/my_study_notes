@@ -331,3 +331,123 @@ sudo apt-get install strace
     ```
 
 6. 注:我们看到它实际是用SYS_write系统调用来做打印输出,其实write()函数是SYS_write的封装,SYS_write是真正的系统调用
+
+---------------------------------------------
+
+### 用调试工具掌握软件的工作原理
+
+大家都知道，在进程内打开一个文件，都有唯一一个文件描述符（fd：file descriptor）与这个文件对应。而本人在开发一个软件过程中遇到这样一个问题：已知一个fd ，如何获取这个fd所对应文件的完整路径？不管是Linux、FreeBSD或是其它Unix系统都没有提供这样的API，怎么办呢？我们换个角度思考：Unix下有没有什么软件可以获取进程打开了哪些文件？如果你经验足够丰富，很容易想到lsof，使用它既可以知道进程打开了哪些文件，也可以了解一个文件被哪个进程打开。
+
+好，我们用一个小程序来试验一下lsof，看它是如何获取进程打开了哪些文件。
+
+1. 测试文件如下:
+    ```
+    kalipy@debian ~/g/strace> ls
+    testlsof.c
+    kalipy@debian ~/g/strace> more testlsof.c
+    /*
+     * testlsof.c
+     * Copyright (C) 2020 2020-12-10 19:09 kalipy <kalipy@debian>
+     *
+     * Distributed under terms of the MIT license.
+     */
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+    int main(void)
+    {
+        open("test.txt", O_CREAT|O_RDONLY);    /* 打开文件./test.txt*/
+        sleep(1200); //睡眠1200秒，以便进行后续操作
+    
+        return 0;
+    }
+
+    ```
+
+2. 将testlsof放入后台运行，其pid为8280。命令lsof -p 8280查看进程8280打开了哪些文件，我们用strace跟踪lsof的运行，输出结果保存在lsof.strace中
+    ```
+    kalipy@debian ~/g/strace> gcc testlsof.c
+    kalipy@debian ~/g/strace> ls
+    a.out  testlsof.c
+    kalipy@debian ~/g/strace> ./a.out &
+    [1] 8280
+    kalipy@debian ~/g/strace> strace -o lsof.strace lsof -p 8280
+    COMMAND  PID   USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+    a.out   8280 kalipy  cwd    DIR    8,3     4096 1213022 /home/kalipy/gg/strace
+    a.out   8280 kalipy  rtd    DIR    8,3     4096       2 /
+    a.out   8280 kalipy  txt    REG    8,3    16432 1190397 /home/kalipy/gg/strace/a.out
+    a.out   8280 kalipy  mem    REG    8,3  1824496 6423207 /usr/lib/x86_64-linux-gnu/libc-2.28.so
+    a.out   8280 kalipy  mem    REG    8,3   165632 6422544 /usr/lib/x86_64-linux-gnu/ld-2.28.so
+    a.out   8280 kalipy    0u   CHR  136,1      0t0       4 /dev/pts/1
+    a.out   8280 kalipy    1u   CHR  136,1      0t0       4 /dev/pts/1
+    a.out   8280 kalipy    2u   CHR  136,1      0t0       4 /dev/pts/1
+    a.out   8280 kalipy    3r   REG    8,3        0 1190416 /home/kalipy/gg/strace/test.txt
+
+    ```
+
+3. 我们以"test"为关键字搜索输出文件lsof.strace，结果只有一条：
+    ```
+    kalipy@debian ~/g/strace> ls
+    a.out  lsof.strace  testlsof.c  test.txt
+    kalipy@debian ~/g/strace> rg "test" lsof.strace
+    3724:readlink("/proc/8280/fd/3", "/home/kalipy/gg/strace/test.txt", 4096) = 31
+
+    ```
+
+4. 原来lsof巧妙的利用了/proc/nnnn/fd/目录（nnnn为pid）：Linux内核会为每一个进程在/proc/建立一个以其pid为名的目录用来保存进程的相关信息，而其子目录fd保存的是该进程打开的所有文件的fd。目标离我们很近了。好，我们到/proc/8280/fd/看个究竟： 
+    ```
+    kalipy@debian ~/g/strace> ll /proc/8280/fd/
+    总用量 0
+    lrwx------ 1 kalipy kalipy 64 12月 10 19:17 0 -> /dev/pts/1
+    lrwx------ 1 kalipy kalipy 64 12月 10 19:17 1 -> /dev/pts/1
+    lrwx------ 1 kalipy kalipy 64 12月 10 19:17 2 -> /dev/pts/1
+    lr-x------ 1 kalipy kalipy 64 12月 10 19:17 3 -> /home/kalipy/gg/strace/test.txt
+    kalipy@debian ~/g/strace> readlink /proc/8280/fd/3
+    /home/kalipy/gg/strace/test.txt
+    ```
+
+5. 答案已经很明显了：/proc/nnnn/fd/目录下的每一个fd文件都是符号链接，而此链接就指向被该进程打开的一个文件。我们只要用readlink()系统调用就可以获取某个fd对应的文件了，代码如下：
+    ```
+    kalipy@debian ~/g/strace> more get.c
+    /*
+     * get.c
+     * Copyright (C) 2020 2020-12-10 19:23 kalipy <kalipy@debian>
+     *
+     * Distributed under terms of the MIT license.
+     */
+    
+    #include <stdio.h>
+    #include <string.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include <fcntl.h>
+    #include <sys/stat.h>
+    int get_pathname_from_fd(int fd, char pathname[], int n)
+    {
+        char buf[1024];
+        pid_t  pid;
+        bzero(buf, 1024);
+        pid = getpid();
+        snprintf(buf, 1024, "/proc/%i/fd/%i", pid, fd);
+        return readlink(buf, pathname, n);
+    }
+    int main(void)
+    {
+        int fd;
+        char pathname[4096];
+        bzero(pathname, 4096);
+        fd = open("test.txt", O_CREAT|O_RDONLY);
+        get_pathname_from_fd(fd, pathname, 4096);
+        printf("fd=%d; pathname=%s\n", fd, pathname);
+        return 0;
+    }
+    
+    kalipy@debian ~/g/strace> gcc get.c
+    kalipy@debian ~/g/strace> ls
+    a.out  get.c  lsof.strace  testlsof.c  test.txt
+    kalipy@debian ~/g/strace> ./a.out
+    fd=3; pathname=/home/kalipy/gg/strace/test.txt
+
+    ```
