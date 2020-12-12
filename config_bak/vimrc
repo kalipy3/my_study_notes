@@ -1,0 +1,315 @@
+" All system-wide defaults are set in $VIMRUNTIME/debian.vim and sourced by
+" the call to :runtime you can find below.  If you wish to change any of those
+" settings, you should do it in this file (/etc/vim/vimrc), since debian.vim
+" will be overwritten everytime an upgrade of the vim packages is performed.
+" It is recommended to make changes after sourcing debian.vim since it alters
+" the value of the 'compatible' option.
+
+" This line should not be removed as it ensures that various options are
+" properly set to work with the Vim-related packages available in Debian.
+runtime! debian.vim
+
+" Vim will load $VIMRUNTIME/defaults.vim if the user does not have a vimrc.
+" This happens after /etc/vim/vimrc(.local) are loaded, so it will override
+" any settings in these files.
+" If you don't want that to happen, uncomment the below line to prevent
+" defaults.vim from being loaded.
+" let g:skip_defaults_vim = 1
+
+" Uncomment the next line to make Vim more Vi-compatible
+" NOTE: debian.vim sets 'nocompatible'.  Setting 'compatible' changes numerous
+" options, so any other options should be set AFTER setting 'compatible'.
+"set compatible
+
+" Vim5 and later versions support syntax highlighting. Uncommenting the next
+" line enables syntax highlighting by default.
+syntax on
+
+" If using a dark background within the editing area and syntax highlighting
+" turn on this option as well
+"set background=dark
+
+" Uncomment the following to have Vim jump to the last position when
+" reopening a file
+"au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
+" Uncomment the following to have Vim load indentation rules and plugins
+" according to the detected filetype.
+"filetype plugin indent on
+
+" The following are commented out as they cause vim to behave a lot
+" differently from regular Vi. They are highly recommended though.
+"set showcmd		" Show (partial) command in status line.
+"set showmatch		" Show matching brackets.
+"set ignorecase		" Do case insensitive matching
+"set smartcase		" Do smart case matching
+"set incsearch		" Incremental search
+"set autowrite		" Automatically save before commands like :next and :make
+"set hidden		" Hide buffers when they are abandoned
+set mouse=a		" Enable mouse usage (all modes)
+
+" Source a global configuration file if available
+if filereadable("/etc/vim/vimrc.local")
+	source /etc/vim/vimrc.local
+endif
+
+
+set nu
+let g:ycm_global_ycm_extra_conf = '~/.ycm_global_ycm_extra_conf.py'
+
+let g:ycm_key_invoke_completion = '<c-z>'
+
+
+imap <C-G> <Esc>:JCgenerateAccessors<CR>
+
+
+map <C-n> :NERDTreeToggle<CR>
+map <silent> <F8> :TlistToggle<cr>
+
+let Tlist_Ctags_Cmd="/usr/bin/ctags"
+let Tlist_Show_One_File=1  
+let Tlist_WinWidth=30 
+let Tlist_Exit_OnlyWindow=1
+let Tlist_Use_Left_Window=1
+
+
+"自定义语法ctag
+au BufNewFile,BufRead *.nodejs    setf mynodejs
+
+
+"输入2个字符后自动补全
+let g:ycm_min_num_identifier_candidate_chars = 2
+let g:ycm_semantic_triggers =  {
+			\ 'c,cpp,python,go,erlang,perl': ['re!\w{2}'],
+			\ 'cs,lua,css,html,javascript,nodejs,node': ['re!\w{2}'],
+			\ }
+
+"括号之类成对出现
+let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"'} 
+
+"tags在vim中":w"保存后自动生成或更新
+let g:gutentags_project_root = ['.root', '.svn', '.git', '.nodejs','*.nodejs','.js','.java']
+let g:gutentags_ctags_tagfile = '.tags'
+let s:vim_tags = expand('~/.cache/tags')
+let g:gutentags_cache_dir = s:vim_tags
+if !isdirectory(s:vim_tags)
+	silent! call mkdir(s:vim_tags, 'p')
+endif
+let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+let g:gutentags_ctags_extra_args += ['--c++-kinds=+pxI']
+let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
+
+
+"html emmet插件
+let g:user_emmet_expandabbr_key = '<C-E>'
+
+
+"java代码自动补全 javacomplete2插件
+autocmd FileType java setlocal omnifunc=javacomplete#Complete
+let g:JavaComplete_GradleExecutable = '/home/kalipy/.sdkman/candidates/gradle/6.5/bin/gradle'
+
+"classes.jar是安卓gradle下载的.arr包解压后的classes.jar文件,开发安卓还是有问题，因为classes.jar中的有些类
+"javacomplete2会识别为包，然后代码补全不了该类，就是有的可以，有的不可以，不知道为什么
+"let g:JavaComplete_LibsPath = "/home/android/android_sdk/platforms/android-29/android.jar:/home/android/TermuxWithGradle-master/exampleApp/app/classes.jar:/home/android/.gradle/caches/modules-2/files-2.1/"
+
+"let g:JavaComplete_LibsPath = "/home/android/TermuxWithGradle-master/exampleApp/app/build/intermediates/classes/release/com/mycompany/myapp2/"
+
+"let g:JavaComplete_PomPath = "/home/kalipy/bak2/mvn_javaweb/myweb/pom.xml"
+
+"let g:JavaComplete_LibsPath = "/home/android/TermuxWithGradle-master/exampleApp/runingworld/libs/api-82.jar:/home/android/android_sdk/platforms/android-29/android.jar"
+"let g:JavaComplete_LibsPath = "/home/kalipy/TermuxWithGradle-master/exampleApp/runingworld/libs/api-82.jar:/home/android/android_sdk/platforms/android-29/android.jar"
+
+"let g:JavaComplete_JavaviLogDirectory = '/home/kalipy/j2ee_study/'
+
+
+set nocompatible
+filetype off
+
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+Plugin 'artur-shaik/vim-javacomplete2'
+
+Plugin 'Valloric/YouCompleteMe'
+"""""""""""""""""Bundle 'ludovicchabant/vim-gutentags'
+Bundle 'taglist.vim'
+Plugin 'https://github.com/kien/ctrlp.vim.git'
+Plugin 'https://github.com/scrooloose/nerdtree.git'
+Plugin 'https://github.com/aperezdc/vim-template.git'
+Plugin 'https://github.com/pangloss/vim-javascript.git'
+Plugin 'https://github.com/wesleyche/SrcExpl.git'
+Plugin 'marijnh/tern_for_vim'
+Plugin 'jiangmiao/auto-pairs'
+
+Plugin 'majutsushi/tagbar'
+""""""""""""""""""""Plugin 'ramitos/jsctags'
+Plugin 'tpope/vim-fugitive'
+Plugin 'juneedahamed/svnj.vim'
+
+"安装markdown插件
+"语法高亮
+Plugin 'godlygeek/tabular' "必要插件，安装在vim-markdown前面
+Plugin 'plasticboy/vim-markdown'
+"预览
+Plugin 'iamcco/markdown-preview.vim'
+"markdown图片复制粘贴 请一定要看官网教程 百度上的垃圾教程全是有问题的
+Plugin 'ferrine/md-img-paste.vim'
+"python代码tab补全/快速
+Plugin 'https://github.com/rkulla/pydiction.git'
+
+"html神器
+Plugin 'mattn/emmet-vim'
+"语法实时检查
+"Plugin 'https://github.com/vim-syntastic/syntastic.git'
+
+"python代码自动补全，没ycm好和快
+"Bundle 'davidhalter/jedi-vim'
+
+"vue语法高亮与代码补全
+Plugin 'posva/vim-vue'
+
+"缩进垂直对齐线
+Plugin 'nathanaelkane/vim-indent-guides'
+
+Plugin 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plugin 'junegunn/fzf.vim'
+
+call vundle#end()
+filetype plugin indent on
+
+
+"set foldmethod=syntax       "代码折叠
+
+"syntastic语法检查
+"set statusline+=%#warningmsg#
+"set statusline+=%{SyntasticStatuslineFlag()}
+"set statusline+=%*
+"let g:syntastic_always_populate_loc_list = 1
+"let g:syntastic_auto_loc_list = 1
+"let g:syntastic_check_on_open = 1
+"let g:syntastic_check_on_wq = 0
+
+
+
+
+"if has('python3')
+"let g:loaded_youcompleteme = 1 " 判断如果是python3的话，就禁用ycm
+
+"python tab键代码补全,弥补手机linux的ycm有点卡的缺点
+let g:pydiction_location = '~/.vim/bundle/pydiction/complete-dict'
+let g:pydiction_menu_height = 20
+
+
+"markdown
+"查看所有配置建议
+":help vim-markdwon
+"[[ "跳转上一个标题
+"]] "跳转下一个标题
+"]c "跳转到当前标题
+"]u "跳转到副标题
+"zr "打开下一级折叠
+"zR "打开所有折叠
+"zm "折叠当前段落
+"zM "折叠所有段落
+":Toc "显示目录
+let g:vim_markdown_math = 1
+" 打开/关闭预览
+map <silent> <F9> :MarkdownPreview<cr>
+" 指定浏览器路径
+let g:mkdp_path_to_chrome = "/usr/bin/google-chrome"
+"let g:mkdp_path_to_chrome = "/usr/bin/firefox"
+" 指定预览主题，默认Github
+let g:mkdp_markdown_css=''
+
+"markdown图片复制粘贴
+"设置默认储存文件夹。这里表示储存在当前文档所在文件夹下的'pic'文件夹下，相当于 ./pic/
+"let g:mdip_imgdir = 'pic' 
+let g:mdip_imgdir = './img' 
+"设置默认图片名称。当图片名称没有给出时，使用默认图片名称
+"let g:mdip_imgname = 'image'
+autocmd FileType markdown map <silent> <F10> :call mdip#MarkdownClipboardImage()<CR>
+
+" Tagbar
+" 添加的自定义语言支持
+let g:tagbar_type_mynodejs = {'ctagstype': 'mynodejs', 'kinds': ['f:func:0:0']}
+let g:tagbar_width=35
+let g:tagbar_autofocus=1
+nmap <F6> :TagbarToggle<CR>
+
+
+set autoindent
+set tabstop=4
+set shiftwidth=4
+set expandtab
+
+set encoding=utf-8
+
+
+
+"vue
+au BufNewFile,BufRead *.html,*.js,*.vue set tabstop=2
+au BufNewFile,BufRead *.html,*.js,*.vue set softtabstop=2
+au BufNewFile,BufRead *.html,*.js,*.vue set shiftwidth=2
+au BufNewFile,BufRead *.html,*.js,*.vue set expandtab
+au BufNewFile,BufRead *.html,*.js,*.vue set autoindent
+au BufNewFile,BufRead *.html,*.js,*.vue set fileformat=unix
+
+
+"vim编辑php文件时html无法自动缩进的解决办法
+"解决办法:
+"1.确保vim中开启了文件类型检查: filetype on
+"2.加入以下快捷键,在编辑中根据文件类型实时更改
+"nnoremap <leader>1 :set filetype=xhtml<CR>
+"nnoremap <leader>2 :set filetype=css<CR>  
+"nnoremap <leader>3 :set filetype=javascript<CR>  
+"nnoremap <leader>4 :set filetype=php<CR>
+"filetype indent on
+"
+
+
+"缩进垂直对齐线
+"let g:indent_guides_enable_on_vim_startup = 1
+"set background=dark
+"let g:indent_guides_start_level=1
+"let g:indent_guides_guide_size=1
+"
+
+
+"vim自动加载cscope.out文件
+if filereadable("cscope.out")
+    cs add cscope.out
+endif
+"cscope快捷键
+nmap <F12>s :cs find s <C-R>=expand("<cword>")<CR><CR>
+nmap <F12>g :cs find g <C-R>=expand("<cword>")<CR><CR>
+nmap <F12>d :cs find d <C-R>=expand("<cword>")<CR><CR>
+nmap <F12>c :cs find c <C-R>=expand("<cword>")<CR><CR>
+nmap <F12>t :cs find t <C-R>=expand("<cword>")<CR><CR>
+nmap <F12>e :cs find e <C-R>=expand("<cword>")<CR><CR>
+nmap <F12>f :cs find f <C-R>=expand("<cword>")<CR><CR>
+nmap <F12>i :cs find i <C-R>=expand("<cword>")<CR><CR>
+"F12 + s　　　　Find this C symbol
+"F12 + g　　　　Find this definition
+"F12 + d　　　　Find functions called by this function
+"F12 + c　　　　Find functions calling this function
+"F12 + t　　　　Find this text string
+"F12 + e　　　　Find this egrep pattern
+"F12 + f　　　　Find this file
+"F12 + i　　　　Find files #including this file
+
+
+
+let g:ycm_complete_in_comments=1    "补全在注释中也有效
+let g:ycm_show_diagnostics_ui=0 "关闭语法错误提示
+let g:ycm_collect_identifiers_from_tags_files=1 "开启ycm标签补全引擎
+let g:ycm_seed_identifiers_with_syntax=1 "开启语法关键字补全
+
+
+
+
+
+
+" Enable folding开启代码折叠 vim自带的
+set foldmethod=indent
+set foldlevel=99
+" Enable folding with the spacebar
+nnoremap <space> za

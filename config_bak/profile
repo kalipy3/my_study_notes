@@ -1,0 +1,87 @@
+# /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
+# and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
+
+if [ "`id -u`" -eq 0 ]; then
+  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+else
+  PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+fi
+export PATH
+
+if [ "${PS1-}" ]; then
+  if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
+    # The file bash.bashrc already sets the default PS1.
+    # PS1='\h:\w\$ '
+    if [ -f /etc/bash.bashrc ]; then
+      . /etc/bash.bashrc
+    fi
+  else
+    if [ "`id -u`" -eq 0 ]; then
+      PS1='# '
+    else
+      PS1='$ '
+    fi
+  fi
+fi
+
+if [ -d /etc/profile.d ]; then
+  for i in /etc/profile.d/*.sh; do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi
+
+#环境变量配置GRADLE_USER_HOME,让gradle使用maven的仓库
+GRADLE_USER_HOME=/home/kalipy/.m2/repository
+
+export GRADLE_HOME=/home/kalipy/.sdkman/candidates/gradle/6.5
+export PATH=$GRADLE_HOME/bin:$PATH
+
+ANDROID_NDK_HOME=/home/kalipy/android-ndk-r21
+export PATH=$ANDROID_NDK_HOME:$PATH
+
+#setNDK env
+NDKROOT=/home/kalipy/android-ndk-r21
+export PATH=$NDKROOT:$PATH
+
+export JAVA_HOME=/home/kalipy/jdk1.8/jdk1.8.0_251
+#export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export JRE_HOME=${JAVA_HOME}/jre
+export CLASSPATH=.:${JAVA_HOME}/lib/tools.jar:${JRE_HOME}/lib/dt.jar:/home/kalipy/android_sdk/platforms/android-29/android.jar
+export PATH=${JAVA_HOME}/bin:${JAVA_HOME}/jre/bin:$PATH
+
+#android_sdk
+export ANDROID_HOME=/home/kalipy/android_sdk #此处写android_sdk的路径
+export PATH=$ANDROID_HOME/tools:$PATH
+export PATH=$ANDROID_HOME/tools/bin:$PATH
+export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+#手机v2ray热点共享,重启有效
+#export http_proxy=http://192.168.43.1:10809
+#export https_proxy=http://192.168.43.1:10809
+#export socks_proxy=http://192.168.43.1:10808
+#export HTTP_PROXY=http://192.168.43.1:10809
+#export HTTPS_PROXY=http://192.168.43.1:10809
+#export SOCKS_PROXY=http://192.168.43.1:10808
+#
+
+
+#export http_proxy=http://127.0.0.1:7890
+#export https_proxy=http://127.0.0.1:7890
+#export socks_proxy=http://127.0.0.1:7891
+#export HTTP_PROXY=http://127.0.0.1:7890
+#export HTTPS_PROXY=http://127.0.0.1:7890
+#export SOCKS_PROXY=http://127.0.0.1:7891
+
+#you-get的bin路径 见~/.bashrc
+export PATH=/home/kalipy/.local/bin:$PATH
+
+#soundwire的bin路径
+export PATH=$PATH:/home/kalipy/下载/SoundWireServer/SoundWireServer
+
+export PATH=$PATH:/home/kalipy/gcc-arm-none-eabi-9-2020-q2-update/gcc-arm-none-eabi-9-2020-q2-update/bin
+
+##gcc-10
+export PATH=/home/kalipy/gcc10_install_by_source/gg/bin:$PATH
