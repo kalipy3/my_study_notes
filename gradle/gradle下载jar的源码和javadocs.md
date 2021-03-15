@@ -62,3 +62,17 @@ dependencies {
     //这样就可以成功下载springboot的源码了
     implementation 'org.springframework.boot:spring-boot-starter-web:2.4.3:sources'
     ```
+
+3. 虽然成功下了springboot-starter-web的源码，但是我们解压查看，发现由于springboot的依赖存在很多父子依赖，这样下载的并不是真正的源码  
+
+4. 解决方案:  
+    ```
+    ### springboot源码阅读
+    
+    1. 方法一(失败，因为springboot的依赖有很多父子依赖，这样下载的并不是真正的源码):  
+        通过gradle的build.gradle中添加:`testImplementation 'org.springframework.boot:spring-boot-starter-web:2.4.3:sources'`
+    
+    2. 方法二(通过github下载,ok):  
+        下载地址: `https://github.com/spring-projects/spring-boot/tree/2.4.x`
+    
+    ```
