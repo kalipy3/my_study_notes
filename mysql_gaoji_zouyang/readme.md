@@ -1138,11 +1138,132 @@ order by满足两种情况，会使用index方式排序
 
 ![Image](./img/image_2021-04-05-21-14-06.png)
 
+### 行锁理论
 
+特点: 
 
+* 偏向`InnoDB`存储引擎，开销大，加锁慢，会出现死锁。锁定粒度小，发生锁冲突的概率最低，并发度最高。
+* InnoDB与MyISAM最大的不同是InnoDB支持事务和采用了行级锁
 
+#### 回顾老知识
 
+##### 事务及其ACID属性
 
+![Image](./img/image_2021-04-06-15-15-25.png)
 
+##### 并发事务带来的问题
 
+* 更新丢失
+* 脏读
+* 不可重复读
+* 幻读
 
+![Image](./img/image_2021-04-06-15-18-22.png)
+
+![Image](./img/image_2021-04-06-15-19-35.png)
+
+![Image](./img/image_2021-04-06-15-21-25.png)
+
+![Image](./img/image_2021-04-06-15-22-23.png)
+
+##### 事务的隔离级别
+
+![Image](./img/image_2021-04-06-15-23-48.png)
+
+### 行锁案例讲解
+
+* 创建sql表
+* 行锁定基本演示
+* 无索引行锁升级为表锁
+* 间隙锁危害
+* 面试题之如何锁定一行
+
+#### 环境准备
+
+![Image](./img/image_2021-04-06-15-29-10.png)
+
+![Image](./img/image_2021-04-06-15-30-09.png)
+
+#### 行锁定基本演示
+
+`set autocommit=0;`是关闭自动提交，不然没办法演示手动提交事务
+
+![Image](./img/image_2021-04-06-15-44-35.png)
+
+再如:
+
+`session-1`执行`update`却还没`commit`时，右边`session-2`的`a=4`的那条记录还是`4000`。
+
+![Image](./img/image_2021-04-06-15-48-26.png)
+
+---
+
+`session-1`执行`commit`后，`session-2`查询的`a=4`的记录才会变为`session-1`修改后的`4001`
+
+![Image](./img/image_2021-04-06-17-00-18.png)
+![Image](./img/image_2021-04-06-17-04-40.png)
+
+### 无索引或索引失效行锁变表锁
+
+**注意:** `session-1`和`session-2`都设置成了手动commit
+
+![Image](./img/image_2021-04-06-17-49-20.png)
+
+ok,此时由于是修改的不同的记录，所以是行锁
+
+---
+
+![Image](./img/image_2021-04-06-17-53-17.png)
+![Image](./img/image_2021-04-06-17-53-37.png)
+
+好家伙，现在把`session-1`的`where b='4000'`改为`where b=4000`后，由于自动类型转换导致索引失效，**直接行锁变成表锁了**，所以`session-2`的`update`语句直接阻塞了。
+
+只有等到`session-1`执行`commit`后，`session-2`的`update`操作才会由阻塞变为执行。
+
+### 间隙锁的危害
+
+![Image](./img/image_2021-04-06-18-22-15.png)
+
+`test_innodb_lick`表里虽然没有`a=2`的记录，`session-1`的`where a>1 and a<6`却会把`a= 2 3 4 5`都锁了，即使`a=2`的记录并不存在。所以`session-2`的insert语句会阻塞。
+
+直到`session-1`执行`commit`后，`session-2`的`insert`语句才会由阻塞变为执行。
+
+---
+
+![Image](./img/image_2021-04-06-18-20-20.png)
+
+### 面试题: 常考如何锁定一行
+
+![Image](./img/image_2021-04-06-18-28-51.png)
+
+### 行锁总结
+
+![Image](./img/image_2021-04-06-18-41-36.png)
+
+![Image](./img/image_2021-04-06-18-42-01.png)
+
+![Image](./img/image_2021-04-06-18-42-25.png)
+
+![Image](./img/image_2021-04-06-18-43-43.png)
+
+#### 优化建议
+
+![Image](./img/image_2021-04-06-18-43-04.png)
+
+### mysql主从复制
+
+#### 复制的基本原理
+
+* slave会从master读取binlog来进行数据同步
+
+![Image](./img/image_2021-04-06-18-47-51.png)
+
+#### 复制的基本原则
+
+* 每个slave只有一个master
+* 每个slave只能有一个唯一的服务器ID
+* 每个master可以有多个slave
+
+#### 一主一从常见配置
+
+不难，麻烦，以后用到再回来看!!
