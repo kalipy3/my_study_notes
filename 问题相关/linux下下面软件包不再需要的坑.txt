@@ -1,0 +1,43 @@
+linux下下面软件包不再需要的坑.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2021-06-02 16:42
+
+
+下列软件包是自动安装的并且现在不需要了：
+    qemu-system-gui
+使用'sudo apt autoremove'来卸载它(它们)。 
+
+坑:
+    1.千万别执行sudo apt autoremove,不然你就等着重装系统吧..数据没了你哭都没得哭..
+    
+    2.原因：只要包被删除，依赖包就会被标注为autoremove,但是可能还被其它包依赖
+    
+正确解决方案一(重新安装一下即可):
+    kalipy@debian ~/w/u/video_tenant_test> sudo apt-get install qemu-system-gui      
+    qemu-system-gui 已经是最新版 (1:3.1+dfsg-8+deb10u8)。
+    qemu-system-gui 已设置为手动安装。    
+
+正确解决方案二(批量选中auto的包，重新安装):
+    sudo apt-mark showauto | xargs sudo apt-get install -y
+    
+扩展：
+    dpkg -L packagename可以列出这个软件包含了哪些文件
+
+    系统安装软件一般在/usr/share,可执行文件在/usr/bin,配置在/etc,lib文件在/usr/lib,文档在/usr/share
+    
+最后，由于apt不能彻底卸载软件，所以请用aptitude来管理软件
+
+    aptitude安装:
+        sudo apt-get install aptitude
+        
+        
+aptitude使用:
+    安装软件:
+        sudo aptitude install php
+        
+    卸载软件:
+        sudo aptitude remove php
+
+        猜测apt和aptitude的卸载都是通过正则匹配php等文字来卸载包的，所以还是卸载不彻底，解决办法，每次在安装软件的时候自己用一个txt文件记录该软件都安装了哪些包，卸载的时候从txt中一个一个卸载吧。。也可以用python写个脚步
