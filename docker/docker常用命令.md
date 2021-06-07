@@ -30,6 +30,9 @@ docker pull mysql:8.0
 docker rmi -f id
 docker rmi -f $(docker images -aq)
 
+#限制容器的最大允许使用内存(有些容器里的某些程序的运行太占内存会导致主机太卡或死机)
+sudo docker run -it -m 1024M hoppscotch/hoppscotch:latest
+
 #启动并进入容器 -it什么意思? 参考docker run --help自己看
 docker run -it centos /bin/bash #有的容器用的是/bin/sh这个shell
 #查看正在运行的容器
