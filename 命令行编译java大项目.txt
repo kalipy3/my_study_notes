@@ -1,0 +1,60 @@
+命令行编译java大项目.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2021-06-08 00:07
+
+
+### 项目只有一个包时
+
+//-d 指定.class文件生成路径（且会自动生成包名对应的文件夹），./*.java是编译当前目录下的所有.java文件
+javac -d ./bin ./*.java
+注意：可在任意目录下执行javac命令，只要写了*.java的路径（这里是./当前目录下）的话
+
+//-cp 指定.class文件搜索路径
+java -cp bin: chapter_1_stackandqueue.Problem_01_GetMinStack
+java -cp chapter_1_stackandqueue/bin:  chapter_1_stackandqueue.Problem_01_GetMinStack
+注意：可在任意目录下执行java命令，只要加了-cp选项的话
+
+
+gradle
+java -cp  build/classes/java/main: com.App
+
+### 项目有多个不同的包时(且带j2ee等框架的外部jar依赖时,注意，虽然gradle支持limbok,但是javac不支持编译lombok的@Data等，请老老实实手写有参无参构造和setget方法)
+
+这里是用javac编译的(-Djava.ext.dirs指定mybatis中要使用的jar包，可以find ~/.gradle/ -iname "junit-4.13*"，然后把所有jar包放到bin_lib中;2.找到所有包下所有java文件,放到bin_source目录，即find ./ -iname "*.java" -type f -exec cp {} ./bin_source \;
+)
+kalipy@debian ~/b/j/kuansen_mybatis> 
+javac -Djava.ext.dirs=./bin_lib -d ./bin ./bin_source/*.java
+
+kalipy@debian ~/b/j/kuansen_mybatis> tree bin/
+bin/
+└── com
+    ├── App.class
+    └── kuang
+        ├── dao
+        │   └── BlogMapper.class
+        ├── pojo
+        │   └── Blog.class
+        └── utils
+            ├── IDUtils.class
+            └── MybatisUtils.class
+
+5 directories, 5 files
+
+运行:
+java -cp bin: com.xxx.xxx.xxx -Djava.ext.dirs=./bin_lib
+或java -Djava.ext.dirs=./bin_lib com.xx.xx.xx
+
+这里是用gradle编译的
+kalipy@debian ~/b/j/kuansen_mybatis> tree build/classes/java/main/com/
+build/classes/java/main/com/
+├── App.class
+└── kuang
+    ├── dao
+    │   └── BlogMapper.class
+    ├── pojo
+    │   └── Blog.class
+    └── utils
+        ├── IDUtils.class
+        └── MybatisUtils.class
