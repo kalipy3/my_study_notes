@@ -31,7 +31,7 @@ docker rmi -f id
 docker rmi -f $(docker images -aq)
 
 #启动并进入容器 -it什么意思? 参考docker run --help自己看
-docker run -it centos /bin/bash
+docker run -it centos /bin/bash #有的容器用的是/bin/sh这个shell
 #查看正在运行的容器
 docker ps
 #查看曾经运行过的容器
