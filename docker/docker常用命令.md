@@ -6,6 +6,44 @@ docker常用命令.md
 :Date: 2020-12-29 19:48
 ```
 
+# 使用docker需要注意知识点
+
+--net=host参数的作用
+
+    一句话总结,加了--net=host以后就不需要再做端口映射了.比如docker容器内在8080端口起了一个web server.不加的话需要把本机的某个port比如7979和docker内的8080做一个映射关系,访问的时候访问7979. 加了net=host则直接访问8080.
+    
+    另外,加了net=host后会使得创建的容器进入命令行好名称显示为主机的名称而不是一串id.　
+
+--net=host参数会导致容器没有自己的ip地址
+
+    即通过`sudo docker inspect 容器id`查看容器的ip地址显示是空的
+
+docker实现多个端口映射,即通过多个`-p`来实现
+
+    docker run --name definedName(自定义容器名称) -p 8080:8080(端口映射  本机端口: docker端口 ) -p 8081:8081 -p .... d imagesName(镜像名称)
+
+# 需要注意的问题
+
+docker-compose命令找不到:
+
+    sudo: docker-compose：找不到命令
+
+解决(下载docker-compose):
+
+官网地址: https://github.com/docker/compose
+
+    kalipy@debian ~/下/a/conf> sudo chmod +x docker-compose-Linux-x86_64
+    kalipy@debian ~/下/a/conf> ls
+    docker-compose-Linux-x86_64*
+
+运行`sudo docker-compose -f stack.yml up`报错:
+
+    Creating network "conf_default" with the default driver ERROR: could not find an available, non-over
+
+解决:
+
+关闭电脑的vpn即可成功
+
 # docker常用命令01
 ```
 docker info
