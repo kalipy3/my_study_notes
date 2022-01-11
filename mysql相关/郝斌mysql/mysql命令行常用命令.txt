@@ -1,0 +1,41 @@
+mysql cmd常用命令:
+
+//显示所有数据库
+show databases;
+
+//使用该数据库
+use 库名;
+
+//查询某一数据库的所有表
+show tables;
+
+//建库
+create database 库名;
+
+//查询表结构
+desc 表名
+
+//查询表的每个字段的注释
+select column_name, column_comment from information_schema.columns where table_schema ='db' and table_name = 'tablename';
+
+//查询表注释
+select table_name,table_comment from information_schema.tables where table_schema = 'db' and table_name ='tablename'
+
+//查看表生成的DDL
+show create table table_name;
+
+--------------------------------------------------------------
+
+rollback : 回滚。
+commit ： 提交。
+start transaction : 关闭自动提交机制。
+
+-----------------------------------------------------------------
+
+* 演示两个事务，假如隔离级别：
+演示第1级别：读未提交
+set global transaction isolation level read uncommitted;
+演示第二级别；读已提交
+set global transaction isolation level read committed;
+演示第三级别:可重复读
+set global transaction isolation level repeatable read;

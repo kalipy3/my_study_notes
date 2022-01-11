@@ -1,0 +1,33 @@
+select distinct
+    from 
+    join
+    on
+    where
+    group by
+    having
+    order by
+    limit
+
+------------------------------------------------------------------------
+
+from
+    on
+    join
+    where
+    group by
+    having
+    select
+    distinct
+    order by
+
+第一步：from 选择表
+
+第二步：where 筛选条件，筛选对象--行
+
+第三步：group by 将筛选出来的数据进行分组
+
+第四步：having 筛选条件，筛选对象--组
+
+第五步：select 选取最后的结果
+
+第六步：order by 将结果按照特定顺序排列
