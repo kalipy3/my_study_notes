@@ -1,0 +1,5 @@
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option PermSize=128m; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: UseCMSCompactAtFullCollection is deprecated and will likely be removed in a future release.
+ INFO logger.LoggerFactory - using logger: com.alibaba.dubbo.common.logger.log4j.Log4jLoggerAdapter
+ INFO container.Main -  [DUBBO] Use container type([log4j, spring, registry, jetty-monitor]) to run dubbo serivce., dubbo version: 2.6.0, current host: 127.0.0.1
+[2021-07-09 13:47:06] Dubbo service server started!
