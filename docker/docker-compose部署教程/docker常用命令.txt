@@ -1,0 +1,84 @@
+cmd.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2022-01-13 19:34
+
+### docker-compose常用命令
+
+构建镜像
+sudo /home/kalipy/docker-compose-Linux-x86_64 build
+
+运行该镜像的所有容器
+sudo /home/kalipy/docker-compose-Linux-x86_64 up -d
+
+停掉所有容器
+sudo /home/kalipy/docker-compose-Linux-x86_64 down
+
+单独启动某个容器
+sudo /home/kalipy/docker-compose-Linux-x86_64 start ruoyi-server
+
+进入该容器(前提是该容器已在运行中)
+sudo /home/kalipy/docker-compose-Linux-x86_64 exec ruoyi-server /bin/bash
+
+单独停止某个容器
+sudo /home/kalipy/docker-compose-Linux-x86_64 stop ruoyi-server
+
+清除残留数据(mysql数据清除之类的)
+sudo /home/kalipy/docker-compose-Linux-x86_64 rm -v
+
+同上
+sudo /home/kalipy/docker-compose-Linux-x86_64 down -v
+
+单独启动某个容器并进入该容器
+sudo /home/kalipy/docker-compose-Linux-x86_64 [run] -d ruoyi-server /bin/bash
+
+### 发布镜像到dockerhub
+
+登录(请先去dockerhub注册账号)
+
+    kalipy@debian ~/b/m/docker> sudo docker login
+
+给刚才构建的镜像去个tag(必须，不然无法push到远程dockerhub)
+
+    kalipy@debian ~/b/m/docker> sudo docker tag ruoyi_ruoyi-server:latest kalipy3/ruoyi-monitor-test:1.0
+
+查看是否成功
+
+    kalipy@debian ~/b/m/docker> sudo docker images
+    REPOSITORY                   TAG       IMAGE ID       CREATED          SIZE
+    ruoyi_ruoyi-server           latest    f1e7791671c5   34 minutes ago   719MB
+    kalipy3/ruoyi-monitor-test   1.0       f1e7791671c5   34 minutes ago   719MB
+
+发布到远程
+
+    kalipy@debian ~/b/m/docker> sudo docker push kalipy3/ruoyi-monitor-test:1.0
+    The push refers to repository [docker.io/kalipy3/ruoyi-monitor-test]
+    c794ba16eade: Pushed 
+    a0396697a298: Pushed 
+    35c20f26d188: Pushed 
+    c3fe59dd9556: Pushed 
+    6ed1a81ba5b6: Pushed 
+    a3483ce177ce: Pushed 
+    ce6c8756685b: Pushed 
+    30339f20ced0: Pushed 
+    0eb22bfb707d: Pushed 
+    a2ae92ffcd29: Pushed 
+    1.0: digest: sha256:7942ceb3e7d7d426976b7fd73af99d8215de31efb48e840a0cf8e90f925e60af size: 2419
+
+搜索刚才发布的镜像(推荐所有作者名字)
+
+kalipy@debian ~/b/m/docker> sudo docker search kalipy3
+NAME                         DESCRIPTION   STARS     OFFICIAL   AUTOMATED
+kalipy3/ruoyi-monitor-test                 0                    
+kalipy3/test                 test          0                    
+
+拉去该远程镜像
+
+kalipy@debian ~/b/m/docker> sudo docker pull kalipy3/ruoyi-monitor-test:1.0
+1.0: Pulling from kalipy3/ruoyi-monitor-test
+Digest: sha256:7942ceb3e7d7d426976b7fd73af99d8215de31efb48e840a0cf8e90f925e60af
+Status: Image is up to date for kalipy3/ruoyi-monitor-test:1.0
+docker.io/kalipy3/ruoyi-monitor-test:1.0
+
+

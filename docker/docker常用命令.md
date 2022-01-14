@@ -86,7 +86,7 @@ docker restart id
 docker stop id
 docker kill id
 
-#后台启动docker容器 用docker ps查看时，发现停止了
+#后台启动docker容器 用docker ps查看时，发现停止了(原因是构建centos镜像时，CMD中没有配置/bin/bash；那为什么nginx也是-d，但是却不会停止?因为nginx官方构建nginx镜像时有配置CMD,CMD中的/bin/bash没有退出，容器就不会直接return 0)
 docker run -d centos
 #进入正在运行的容器
 #方式一
@@ -95,8 +95,8 @@ docker exec -it xxx /bin/bash
 #方式二
 docker attach id
 #区别
-docker exec # 进入容器后开启一个新的终端，可以在里面操作(常用)
-docker attach 进入容器正在执行的终端，不会启动新的进程
+docker exec # 进入容器后开启一个新的终端(所以退出容器终端，不会导致容器的停止)，可以在里面操作(常用)
+docker attach 进入容器正在执行的终端，不会启动新的进程(所以退出容器终端后，容器会停止运行)
 
 #容器数据拷贝到主机
 docker cp 0569081aa89c:/home/test.java ./. 
@@ -180,14 +180,14 @@ sudo docker run -d -p 3311:3306 --name mysql02 --volumes-from mysql01 -e MYSQL_R
 FROM            #基础镜像，一切的起点
 MAINTAINER      #镜像谁写的,姓名+邮箱
 RUN             #镜像构建时要运行的命令
-ADD             #添加的内容
+ADD             #添加的内容(带解压功能，但是不推荐)
 WORKDIR         #镜像的工作目录
 VOLUME          #挂载目录
-EXPOSE          #对外暴露的端口
+EXPOSE          #对外暴露的端口(仅仅只是声明,真正的还得看docker run时指定的)
 CMD             #指定这个容器启动时要运行的命令
-ENTRYPOINT      #同上 区别后面讲
+ENTRYPOINT      #同上 区别请看(https://www.runoob.com/docker/docker-dockerfile.html)
 ONBUILD         #
-COPY            #类似ADD,将文件copy到镜像
+COPY            #类似ADD,将文件copy到镜像(不带解压功能)
 ENV             #构建的时候要设置的环境变量
 
 #test构建一个自己的centos
