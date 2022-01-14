@@ -42,6 +42,13 @@
     
     5 directories, 10 files
 
+说明：
+
+* conf放配置文件
+* db放sql脚本
+* html放vue打包后的dist目录
+* jar放springboot通过maven构建的jar包
+
 ##### 前端项目配置说明
 
 nginx配置：
