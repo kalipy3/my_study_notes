@@ -306,6 +306,18 @@ redis配置：
 
     command: --default-authentication-plugin=mysql_native_password
 
+#### sql文件没有被执行，hsw库也没有被创建
+
+docker-compose.yml文件中，加入`MYSQL_DATABASE: 库名`，该库会在mysql启动是自动创建:
+
+    environment:
+      #指定初始化sql文件的数据库
+      MYSQL_DATABASE: hsw
+      MYSQL_PASS: 'Abcd1234'
+      MYSQL_ROOT_PASSWORD: 'Abcd1234'
+
+![Image](./img/image_2022-01-14-14-09-08.png)
+
 ### docker-compose本地部署(本地运行环境搭建)
 
 和远程部署一样，只是没有了push和pull这两步
