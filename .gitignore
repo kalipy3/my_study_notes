@@ -10,3 +10,11 @@ blog
 嵌入式/远程下载/socketio_downloadhex/node_modules
 
 嵌入式/远程下载/express_ok/*.jpg
+
+设计模式相关/design_patterns/decorator/build
+设计模式相关/design_patterns/observer/build
+设计模式相关/design_patterns/strategy/build
+设计模式相关/design_patterns/template/build
+设计模式相关/design_patterns/state/build
+设计模式相关/design_patterns/iterator/build
+设计模式相关/design_patterns/adapter/build
