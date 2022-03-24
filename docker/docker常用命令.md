@@ -68,6 +68,13 @@ docker pull mysql:8.0
 docker rmi -f id
 docker rmi -f $(docker images -aq)
 
+#查看docker数据占用和清除缓存数据
+
+kalipy@debian ~/b/m/m/郝斌mysql> docker system df
+kalipy@debian ~/b/m/m/郝斌mysql> sudo docker system prune --volumes
+kalipy@debian ~/b/m/m/郝斌mysql> sudo docker system prune -a
+kalipy@debian ~/b/m/m/郝斌mysql> sudo docker system prune
+
 #限制容器的最大允许使用内存(有些容器里的某些程序的运行太占内存会导致主机太卡或死机)
 sudo docker run -it -m 1024M hoppscotch/hoppscotch:latest
 
@@ -129,7 +136,7 @@ docker commit -m="提交说明" -a="作者" 容器id 目标镜像名:[tag]
 docker run -it -v 主机目录:容器内的目录
 docker run -it -v ~/gg/temp:/home centos /bin/bash
 
-#mysql数据持久化测试
+#mysql数据持久化测试(注意！！！！-v挂载数据卷别用u盘，不然容器会exit(127)直接退出！！！！！！！！！)
 sudo docker run -d -p 3311:3306 -v ~/gg/temp/mysql/conf:/etc/mysql/conf.d -v ~/gg/temp/mysql/data:/var/lib/mysql --name mysql02 -e MYSQL_ROOT_PASSWORD=Abcd1234 mysql:8.0
 
 #匿名挂载与具名挂载
