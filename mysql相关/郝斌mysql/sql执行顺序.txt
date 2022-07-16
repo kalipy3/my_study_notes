@@ -31,3 +31,13 @@ from
 第五步：select 选取最后的结果
 
 第六步：order by 将结果按照特定顺序排列
+
+----------------------------------------------------------------------
+
+#### 列出所有部门的详细信息和人数
+
+select d.deptno, d.dname, d.loc, count(e.ename)
+    from emp e
+    right join dept d
+    on e.deptno = d.deptno
+    group by d.deptno, d.dname, d.loc;//只有分完组的信息才可以向select里面放！！！不然结果没有任何意义，或者有的数据库会报语法错误
