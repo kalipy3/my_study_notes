@@ -1,0 +1,207 @@
+minlin.txt
+
+:Author: kalipy
+:Email: kalipy@debian
+:Date: 2021-01-03 13:59
+
+kalipy@debian:~$ kstart plasmashell
+kalipy@debian:~$ kquitapp5 plasmashell
+
+netease-cloud-music
+
+google-chrome
+
+sudo cat /sys/kernel/debug/vgaswitcheroo/switch
+
+sudo systemctl disable snapd.service
+
+sudo radeontop
+
+sudo ln -s /dev/ttyACM0 /dev/ttyS34
+sudo ln -s /home/kalipy/.TIM.unionfs/drive_c/users/kalipy/Desktop qq_recv_link
+
+//查看目录占用磁盘
+sudo du -h -x --max-depth=1
+
+sudo service --status-all
+
+//带密码开启x11vnc服务
+x11vnc -forever -rfbauth ~/.vnc/passwd
+
+//开启vnc服务(非x11版)
+tightvncserver
+
+//超好用的有命令提示的mysql client(请看自己的github的star)
+mycli -u root -p Abcd1234
+mycli -h 112.74.94.74 -P 3306 -u root -p Abcd1234
+
+nohup wicd-client  &
+
+//mvn使用代理
+mvn archetype:generate -DgroupId=com.mycompany.app -DartifactId=my-app -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890
+
+//查看dpkg安装的软件所占用的存储空间位置
+dpkg -L baidunetdisk
+
+rdesktop -f 192.168.1.137 -r disk:share=/media/kalipy/kalipy_data/gitee
+
+rdesktop -f 120.25.202.121 -u administrator -p Zhyl1234@0987
+
+//测试端口是否打开
+telnet 192.168.10.149 8899
+
+//文件上传
+scp -r ruoyi-admin/target/hsw.jar  root@106.52.78.100:~/
+
+//文件下载
+scp root@172.17.0.222:/root/linux-0.11_rate_9600.zip ./.
+
+//sdkmanager --list
+//sdkmanager --uninstall "xxx"
+//sdkmanager --install "xxx"
+
+sudo create_ap wlp8s0 enp9s0 kalipy3 Abcd1234
+
+//电脑声音实时传给手机
+SoundWireServer
+
+//nginx
+kalipy@debian ~/n/n/conf> pwd
+/home/kalipy/nginx_rtmp/nginx-1.18.0/conf
+kalipy@debian ~/n/n/conf> sudo /usr/local/nginx/sbin/nginx -s stop
+kalipy@debian ~/n/n/conf> sudo /usr/local/nginx/sbin/nginx -c /home/kalipy/nginx_rtmp/nginx-1.18.0/conf/nginx_kalipy.conf
+
+
+//按时间排序 且日期不是英文格式
+ls -lt --time-style=long-iso
+
+//fish切换到vi模式
+fish_vi_key_bindings
+//关闭vi模式
+fish_default_key_bindings
+
+//比较差异
+icdiff main_v_02.s main_v.s
+vimdiff main_v_02.s main_v.s
+
+//linux0.11调试
+qemu-system-i386  -m 16M  -boot a -fda Image -hda hdc-0.11.img -s -S
+qemu-system-x86_64  -m 16M  -boot a -fda Image -hda hdc-0.11.img -s -S
+
+//环境临时设置为英文
+export LANG=en
+
+//kde connect 必须关闭防火墙，才能成功
+kalipy@debian ~> sudo ufw status
+kalipy@debian ~> sudo ufw enable
+
+//wifi命令行操作
+~/wifi_cmd_opt.md
+
+//代码统计
+cloc .
+
+//查看文件编码格式
+file xxxx.txt
+//繁体字转简体
+sudo apt-get install zh-autoconvert
+autogb <被讨厌的勇气.txt> 被讨厌的勇气out.txt -i utf8 -o utf8
+//简体转繁体
+autob5
+
+//too long don't read，让man更简洁
+tldr zip
+
+//z终端路径跳转 注意：zsh可以 fish不支持
+source ~/下载/z-master/z-master/z.sh
+//fish支持版
+source /home/kalipy/下载/z.fish/z.fish
+
+//b站命令行弹幕姬
+danmaku room_id
+
+//find只找第一层
+find ./ -mindepth 1 -maxdepth 1 -iname "*xx*"
+
+//swap空间系统不会自动回收 归还swap空间到内存
+sudo swapoff -a && sudo swapon -a
+
+//解释
+//sleep是能从睡眠中快速启动的，往往是秒级的；
+//hibernate主要是设计给笔记本使用的，是能从冬眠中起来，但是花费的时间就比sleep要长了。优点是这样能节省更多的电；
+//hybrid-sleep是前面两者的结合。它既能快速启动，也能在断电恢复供电后将打开的文件与应用，重新显示。
+//原理
+//sleep是将打开的文件与应用，存放在内存中，它会消耗一些电。
+//hibernate是将打开的文件与应用存放在磁盘然后关机，重启后将保存的状态重新从磁盘加载进来。
+//hybrid-sleep将打开的文件与应用，既存放在内存也存放在磁盘。主要是设计给普通计算机使用的，它既能支持像sleep一样快速唤醒，也能支持像hibernate一样断电重启还能将保存的状态恢复。
+
+//hibernate 将 全部的内容放到了swap交换分区里面，然后断电关机，原来的工作会保留，但开机会很慢，因为占用了swap 可用 swapoff -a 还原否则会很卡，这个过程会很慢，因为他要将全部放到swap里面，然后恢复直接 电源键，指示灯不会亮，不会耗电
+//suspend 暂停 将内容放到了 内存中，恢复会很快，直接按键space即可恢复，会在后台一直耗电，所以得一直插着电，电脑指示灯会一直亮着
+//power off直接关机，不会保留原来的工作
+
+sudo systemctl suspend
+sudo systemctl sleep
+sudo systemctl hibernate
+sudo systemctl bybrid-sleep
+
+
+//磁盘信息查看
+sudo smartctl --all /dev/sda3
+//查看磁盘是否开启smart
+sudo smartctl -i /dev/sda3
+//快速检测
+sudo smartctl -C -t short /dev/sda3
+//查看快速检测的结果
+sudo smartctl -l selftest /dev/sda3
+//查看快速检测的结果
+sudo smartctl -l error /dev/sda3
+
+
+//虚拟麦克风(手机麦克风作为电脑麦克风)
+//官方教程：https://wolicheng.com/womic/wo_mic_linux.html
+1.手机安装wo mic.app
+2.电脑执行`./micclient-x86_64.AppImage -t wifi 192.168.31.8`连接上手机
+
+//录制测试
+arecord -c 1 -r 48000 -f S16_LE -D "hw:CARD=Loopback,DEV=1,SUBDEV=0" foo.wav
+//播放测试
+aplay foo.wav
+
+//obs怎么设置使用手机虚拟麦克风?
+1.查看目前有哪些设备：arecord -l
+card 1: PCH [HDA Intel PCH], device 0: CX20757 Analog [CX20757 Analog]
+card 2: Loopback [Loopback], device 0: Loopback PCM [Loopback PCM]
+card 2: Loopback [Loopback], device 1: Loopback PCM [Loopback PCM]
+
+2.查看设备名字：arecord -L
+hw:CARD=Loopback,DEV=0
+    Loopback, Loopback PCM
+    Direct hardware device without any conversions
+hw:CARD=Loopback,DEV=1
+    Loopback, Loopback PCM
+    Direct hardware device without any conversions
+
+3.可知虚拟麦克风应该dev=1的`hw:CARD=Loopback,DEV=1`
+
+4.打开obs，来源设置`+`，`音频捕获设备(alsa)`，`设备`选择`Custom`，PCM填虚拟麦克风的名字：`hw:CARD=Loopback,DEV=1`
+
+//虚拟麦克风(方法二)
+1.sudo systemctl start mumble-server.service
+2.sudo systemctl start avahi-daemon.service
+3.执行./mic_over_mumble
+4.手机连接电脑
+5.mumble设置中，音频输入是`默认输入`，音频输入是`Loopback_of_Mumble`
+6.obs使用手机麦克风测试：kde声音设置中，`模拟耳机`设置为默认播放设备，但是`Loopback_of_Mumble的声音请不要禁止，建议100%`，如果obs还是不行，则kde声音设置中把`Loopback_of_Mumble`设置为默认播放设备
+
+7.如果电脑端说话的声音要让其它网络内的其它人听到，则kde声音设置中录音设备选`内部话筒(内置音频 模拟立体音)`(即没插耳机直接使用电脑自带的麦克风说话)
+
+8.可以用`pavucontrol`命令向obs一样检测声音设备是否激活
+
+总结：顺序非常重要：
+1.先开./mic_over_mumble，电脑加入房间
+2.手机连接,加入房间
+3.最后打开obs
+4.如果obs的麦克风要开启`耳反`即监听功能，请关闭jack
+
+//重置声音相关内容
+pulseaudio -k

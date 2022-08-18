@@ -36,7 +36,9 @@ fi
 #环境变量配置GRADLE_USER_HOME,让gradle使用maven的仓库
 GRADLE_USER_HOME=/home/kalipy/.m2/repository
 
-export GRADLE_HOME=/home/kalipy/.sdkman/candidates/gradle/6.5
+#export GRADLE_HOME=/home/kalipy/.sdkman/candidates/gradle/6.5
+#export PATH=$GRADLE_HOME/bin:$PATH
+export GRADLE_HOME=/home/kalipy/下载/gradle-7.1
 export PATH=$GRADLE_HOME/bin:$PATH
 
 ANDROID_NDK_HOME=/home/kalipy/android-ndk-r21
@@ -47,6 +49,7 @@ NDKROOT=/home/kalipy/android-ndk-r21
 export PATH=$NDKROOT:$PATH
 
 export JAVA_HOME=/home/kalipy/jdk1.8/jdk1.8.0_251
+#export JAVA_HOME=/home/kalipy/jdk15_offical/jdk-15.0.2
 #export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export JRE_HOME=${JAVA_HOME}/jre
 export CLASSPATH=.:${JAVA_HOME}/lib/tools.jar:${JRE_HOME}/lib/dt.jar:/home/kalipy/android_sdk/platforms/android-29/android.jar
@@ -83,5 +86,22 @@ export PATH=$PATH:/home/kalipy/下载/SoundWireServer/SoundWireServer
 
 export PATH=$PATH:/home/kalipy/gcc-arm-none-eabi-9-2020-q2-update/gcc-arm-none-eabi-9-2020-q2-update/bin
 
-##gcc-10
-export PATH=/home/kalipy/gcc10_install_by_source/gg/bin:$PATH
+#gcc-10
+#export PATH=/home/kalipy/gcc10_install_by_source/gg/bin:$PATH
+
+#cmake高版本
+export PATH=/home/kalipy/下载/cmake-3.24.0-linux-x86_64/cmake-3.24.0-linux-x86_64/bin:$PATH
+
+export DRI_PRIME=1
+
+#nodejs
+export NODE_HOME=/home/kalipy/node/node-v16.13.2-linux-x64
+export PATH=$NODE_HOME/bin:$PATH
+
+#golang
+export PATH=$PATH:/home/kalipy/下载/go/bin
+#通过go install命令安装的bin，会放到这里
+export PATH=$PATH:/home/kalipy/go/bin
+#解决go mod tidy超时的问题
+export GOPROXY=https://goproxy.io
+#export GOPROXY=https://mirrors.aliyun.com/goproxy/

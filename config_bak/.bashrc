@@ -124,3 +124,6 @@ export PATH=$PATH:/home/kalipy/下载/SoundWireServer/SoundWireServer
 export PATH=$PATH:/home/kalipy/gcc-arm-none-eabi-9-2020-q2-update/gcc-arm-none-eabi-9-2020-q2-update/bin
 
 source /etc/profile
+
+# z.sh终端跳转
+source /home/kalipy/下载/z-master/z-master/z.sh

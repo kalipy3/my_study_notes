@@ -48,6 +48,11 @@ syntax on
 "set hidden		" Hide buffers when they are abandoned
 set mouse=a		" Enable mouse usage (all modes)
 
+" 处理win下文件在Linux乱码的问题
+" 说明cp936就是gbk
+" 通常win系统下的文件在linux乱码，只需要在linux设置成以gbk方式打开即可
+set fileencodings=ucs-bom,utf-8,default,cp936,gb2312,gb18030,big5,euc-jp,euc-kr,latin1
+
 " Source a global configuration file if available
 if filereadable("/etc/vim/vimrc.local")
 	source /etc/vim/vimrc.local
@@ -154,7 +159,7 @@ Plugin 'iamcco/markdown-preview.vim'
 "markdown图片复制粘贴 请一定要看官网教程 百度上的垃圾教程全是有问题的
 Plugin 'ferrine/md-img-paste.vim'
 "python代码tab补全/快速
-Plugin 'https://github.com/rkulla/pydiction.git'
+"Plugin 'https://github.com/rkulla/pydiction.git'
 
 "html神器
 Plugin 'mattn/emmet-vim'
@@ -172,6 +177,27 @@ Plugin 'nathanaelkane/vim-indent-guides'
 
 Plugin 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plugin 'junegunn/fzf.vim'
+
+"状态栏及tab切换打开的文件
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
+
+"markdown表格格式化
+Plugin 'dhruvasagar/vim-table-mode'
+
+"vimtex实时编译并预览latex文档
+Plugin 'lervag/vimtex'
+
+
+" Track the engine.
+Plugin 'SirVer/ultisnips'
+" Snippets are separated from the engine. Add this if you want them:
+Plugin 'honza/vim-snippets'
+
+Plugin 'skywind3000/vim-keysound'
+
+"单词翻译
+Plugin 'voldikss/vim-translator'
 
 call vundle#end()
 filetype plugin indent on
@@ -215,8 +241,8 @@ let g:vim_markdown_math = 1
 " 打开/关闭预览
 map <silent> <F9> :MarkdownPreview<cr>
 " 指定浏览器路径
-let g:mkdp_path_to_chrome = "/usr/bin/google-chrome"
-"let g:mkdp_path_to_chrome = "/usr/bin/firefox"
+"let g:mkdp_path_to_chrome = "/usr/bin/google-chrome"
+let g:mkdp_path_to_chrome = "/usr/bin/firefox"
 " 指定预览主题，默认Github
 let g:mkdp_markdown_css=''
 
@@ -246,9 +272,9 @@ set encoding=utf-8
 
 
 "vue
-au BufNewFile,BufRead *.html,*.js,*.vue set tabstop=2
-au BufNewFile,BufRead *.html,*.js,*.vue set softtabstop=2
-au BufNewFile,BufRead *.html,*.js,*.vue set shiftwidth=2
+au BufNewFile,BufRead *.html,*.js,*.vue set tabstop=4
+au BufNewFile,BufRead *.html,*.js,*.vue set softtabstop=4
+au BufNewFile,BufRead *.html,*.js,*.vue set shiftwidth=4
 au BufNewFile,BufRead *.html,*.js,*.vue set expandtab
 au BufNewFile,BufRead *.html,*.js,*.vue set autoindent
 au BufNewFile,BufRead *.html,*.js,*.vue set fileformat=unix
@@ -313,3 +339,98 @@ set foldmethod=indent
 set foldlevel=99
 " Enable folding with the spacebar
 nnoremap <space> za
+
+
+"airline
+let g:airline#extensions#tabline#enabled=1 "顶部tab显示"
+"nmap <tab> :bn<cr>
+
+"markdown表格格式化
+function! s:isAtStartOfLine(mapping)
+    let text_before_cursor = getline('.')[0 : col('.')-1]
+    let mapping_pattern = '\V' . escape(a:mapping, '\')
+    let comment_pattern = '\V' . escape(substitute(&l:commentstring, '%s.*$', '', ''), '\')
+    return (text_before_cursor =~? '^' . ('\v(' . comment_pattern . '\v)?') . '\s*\v' . mapping_pattern . '\v$')
+endfunction
+
+inoreabbrev <expr> <bar><bar>
+            \ <SID>isAtStartOfLine('\|\|') ?
+            \ '<c-o>:TableModeEnable<cr><bar><space><bar><left><left>' : '<bar><bar>'
+inoreabbrev <expr> __
+            \ <SID>isAtStartOfLine('__') ?
+            \ '<c-o>:silent! TableModeDisable<cr>' : '__'
+
+
+" vimtex配置
+
+"let g:tex_flavor='latex'
+"let g:vimtex_view_method='zathura'
+"let g:vimtex_quickfix_mode=0
+"set conceallevel=2
+"let g:tex_conceal='abdmg'
+"" 对中文的支持
+"let g:Tex_CompileRule_pdf = 'xelatex -synctex=1 --interaction=nonstopmode $*'
+
+
+let g:tex_flavor='latex'
+"let g:vimtex_view_method='zathura'
+let g:Tex_ViewRule_pdf = 'okular --unique'
+let g:vimtex_quickfix_mode=0
+" 对中文的支持
+let g:Tex_CompileRule_pdf = 'xelatex -synctex=1 --interaction=nonstopmode $*'
+let g:vimtex_compiler_latexmk_engines = {'_':'-xelatex'}
+let g:vimtex_compiler_latexrun_engines ={'_':'xelatex'}
+"set conceallevel=2   "这里建议写成2，写1时替换后的效果不好看
+let g:tex_conceal='abdmg'
+
+
+"vim自带的termdebug,使用arm-gdb,在x86平台交叉调试arm程序的时候打开此注释
+"let termdebugger = "arm-none-eabi-gdb"
+
+"ultisnips的
+"读取Ultisnips的路径是~/.vim/UltiSnips
+"触发展开片段的键、跳到下一个占位符的键，跳到上一个占位符的键
+let g:UltiSnipsExpandTrigger="<c-w>"
+let g:UltiSnipsJumpForwardTrigger="<c-w>"
+let g:UltiSnipsJumpBackwardTrigger="<c-q>"
+let g:UltiSnipsSnippetDirectories=[$HOME.'/.vim/UltiSnips']
+
+"vim-keysound 键盘音
+" 启动 Vim 时自动启动
+let g:keysound_enable = 0
+
+" 设置默认音效主题，可以选择：default, typewriter, mario, bubble, sword
+let g:keysound_theme = 'typewriter'
+
+" 设置 python 版本：2 或者3 默认会自动检测
+let g:keysound_py_version = 3
+
+" 设置音量：0-1000
+let g:keysound_volume = 1000
+
+
+"kalipy 切换文件tab快捷键
+"map <C-left> :bp<CR>
+"map <C-right> :bn<CR>
+map <C-j> :bp<CR>
+map <C-k> :bn<CR>
+
+""coc-translator popup
+"nmap <Leader>t <Plug>(coc-translator-p)
+"vmap <Leader>t <Plug>(coc-translator-pv)
+"" echo
+"nmap <Leader>e <Plug>(coc-translator-e)
+"vmap <Leader>e <Plug>(coc-translator-ev)
+""" Configuration example
+" Echo translation in the cmdline
+let g:translator_default_engines = ['bing', 'youdao', 'haici']
+nmap <silent> <Leader>t <Plug>Translate
+vmap <silent> <Leader>t <Plug>TranslateV
+" Display translation in a window
+nmap <silent> <Leader>w <Plug>TranslateW
+vmap <silent> <Leader>w <Plug>TranslateWV
+" Replace the text with translation
+nmap <silent> <Leader>r <Plug>TranslateR
+vmap <silent> <Leader>r <Plug>TranslateRV
+" Translate the text in clipboard
+nmap <silent> <Leader>x <Plug>TranslateX
