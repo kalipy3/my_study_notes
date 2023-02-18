@@ -67,6 +67,8 @@ can't add wlp8s0 to bridge br0: Operation not supported
 
 ---
 
+### 方法一(如果不是用的无线网卡作为br网络，而是用有线网卡作为br网卡，方法一是完全ok的)
+
 br0没被成功加到interface上，我们启动xx.qcow2试下，xml网络配置如下：
 
 ```
@@ -111,7 +113,7 @@ PING 192.168.0.125 (192.168.0.125) 56(84) bytes of data.
 64 bytes from 192.168.0.125: icmp_seq=2 ttl=64 time=0.434 ms
 ```
 
-然而虚拟机还是不能ping通`www.baidu.com`(改/etc/resovl.conf文件也没用)：
+然而虚拟机还是不能ping通`www.baidu.com`(改/etc/resovl.conf文件也没用，原因是无线网卡的问题，无线网卡只要起了br网络，连在host宿主机上都ping不通192.168.0.1这个网关了，还玩个锤子！！)：
 
 ![Image](./img/image_2023-02-12-17-15-59.png)
 
@@ -255,3 +257,175 @@ sudo virsh start csm
 ### 方法三
 
 使用isc-dhcp-server，我在笔记本上用netplan的无线网卡的br0试了下，发现csm是可以正常从isc-dhcpserver获取到ip的，host和csm之间也可以互相Ping通，但是无线网卡不支持br，所有会导致host和csm都ping不通baidu这种外网。
+
+### 方法四(推荐)
+
+网络环境如下：
+
+```
+[I] kalipy@debian /m/k/k/q/arm_64> ip addr
+3: wlp8s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 2a:fb:b6:a1:95:27 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.166/24 brd 192.168.0.255 scope global dynamic wlp8s0
+       valid_lft 67611sec preferred_lft 67611sec
+28953: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 02:42:43:74:e8:de brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:43ff:fe74:e8de/64 scope link 
+       valid_lft forever preferred_lft forever
+28956: tap0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc pfifo_fast master docker0 state DOWN group default qlen 1000
+    link/ether c6:fc:41:50:9a:e1 brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::c4fc:41ff:fe50:9ae1/64 scope link 
+       valid_lft forever preferred_lft forever
+```
+
+配置dhcp:
+
+```
+[I] kalipy@debian /m/k/k/q/arm_64> sudo more /etc/default/isc-dhcp-server
+INTERFACESv4="docker0"
+INTERFACESv6=""
+```
+
+注意，这里的subnet和range要和接口`docker0`同网段，不然dhcp-server会启动失败
+
+```
+[I] kalipy@debian /m/k/k/q/arm_64> sudo more /etc/dhcp/dhcpd.conf
+subnet 172.17.0.0 netmask 255.255.0.0 {
+  range 172.17.0.2 172.17.0.253;
+  option routers 172.17.0.1;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+```
+
+启动dhcp:
+
+```
+[I] kalipy@debian /m/k/k/q/arm_64> sudo systemctl restart isc-dhcp-server.service
+[I] kalipy@debian /m/k/k/q/arm_64> sudo systemctl status isc-dhcp-server.service
+● isc-dhcp-server.service - LSB: DHCP server
+   Loaded: loaded (/etc/init.d/isc-dhcp-server; generated)
+   Active: active (running) since Sat 2023-02-18 22:16:07 CST; 2s ago
+     Docs: man:systemd-sysv-generator(8)
+  Process: 28728 ExecStart=/etc/init.d/isc-dhcp-server start (code=exited, status=0/SUCCESS)
+    Tasks: 1 (limit: 4915)
+   Memory: 6.9M
+   CGroup: /system.slice/isc-dhcp-server.service
+           └─28741 /usr/sbin/dhcpd -4 -q -cf /etc/dhcp/dhcpd.conf docker0
+
+2月 18 22:16:05 debian systemd[1]: Starting LSB: DHCP server...
+2月 18 22:16:05 debian isc-dhcp-server[28728]: Launching IPv4 server only.
+2月 18 22:16:05 debian dhcpd[28741]: Wrote 2 leases to leases file.
+2月 18 22:16:05 debian dhcpd[28741]: Server starting service.
+2月 18 22:16:07 debian isc-dhcp-server[28728]: Starting ISC DHCPv4 server: dhcpd.
+2月 18 22:16:07 debian systemd[1]: Started LSB: DHCP server.
+```
+
+尝试启动qemu:
+
+```
+[I] kalipy@debian /m/k/k/q/arm_64> sudo qemu-system-aarch64 -m 2048 -cpu cortex-a72 -smp 2 -M virt \
+                                                                                            -bios QEMU_EFI.fd -nographic \
+                                                                                            -drive if=none,file=debian10.qcow2,id=hd0 \
+                                                                                            -device virtio-blk-device,drive=hd0 \
+                                                                                            -device virtio-scsi-device \
+                                                                                             -net nic -net tap,ifname=tap0,script=no,downscript=no
+```
+
+效果如下(重点是192.168.0.1这个网关居然都能访问了，百度也能访问了)：
+
+```
+root@debian:~# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global dynamic enp0s1
+       valid_lft 568sec preferred_lft 568sec
+    inet 172.17.0.3/16 brd 172.17.255.255 scope global secondary dynamic enp0s1
+       valid_lft 579sec preferred_lft 579sec
+    inet6 fe80::5054:ff:fe12:3456/64 scope link 
+       valid_lft forever preferred_lft forever
+root@debian:~# ping 192.168.0.1
+PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
+64 bytes from 192.168.0.1: icmp_seq=1 ttl=63 time=3.45 ms
+64 bytes from 192.168.0.1: icmp_seq=2 ttl=63 time=3.00 ms
+^C
+--- 192.168.0.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 5ms
+rtt min/avg/max/mdev = 2.995/3.221/3.448/0.233 ms
+root@debian:~# ping 172.17.0.1
+PING 172.17.0.1 (172.17.0.1) 56(84) bytes of data.
+64 bytes from 172.17.0.1: icmp_seq=1 ttl=64 time=0.797 ms
+^C
+--- 172.17.0.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.797/0.797/0.797/0.000 ms
+root@debian:~# ping www.baidu.com
+PING www.a.shifen.com (39.156.66.14) 56(84) bytes of data.
+64 bytes from 39.156.66.14 (39.156.66.14): icmp_seq=1 ttl=52 time=8.22 ms
+64 bytes from 39.156.66.14 (39.156.66.14): icmp_seq=2 ttl=52 time=12.2 ms
+64 bytes from 39.156.66.14 (39.156.66.14): icmp_seq=3 ttl=52 time=8.64 ms
+64 bytes from 39.156.66.14 (39.156.66.14): icmp_seq=4 ttl=52 time=8.38 ms
+```
+
+说明(如果baidu这种外网无法访问，请手动加入如下内容)：
+
+```
+root@debian:~# more /etc/resolv.conf
+domain example.org
+search example.org
+nameserver 172.17.0.1
+nameserver 223.5.5.5
+nameserver 192.168.0.1
+```
+
+dhcp后台打印如下：
+
+```
+[I] kalipy@debian /m/k/k/q/arm_64> sudo systemctl status isc-dhcp-server.service
+● isc-dhcp-server.service - LSB: DHCP server
+   Loaded: loaded (/etc/init.d/isc-dhcp-server; generated)
+   Active: active (running) since Sat 2023-02-18 22:16:07 CST; 6min ago
+     Docs: man:systemd-sysv-generator(8)
+  Process: 28728 ExecStart=/etc/init.d/isc-dhcp-server start (code=exited, status=0/SUCCESS)
+    Tasks: 1 (limit: 4915)
+   Memory: 6.9M
+   CGroup: /system.slice/isc-dhcp-server.service
+           └─28741 /usr/sbin/dhcpd -4 -q -cf /etc/dhcp/dhcpd.conf docker0
+
+2月 18 22:19:19 debian dhcpd[28741]: ns1.example.org: host unknown.
+2月 18 22:19:19 debian dhcpd[28741]: ns2.example.org: host unknown.
+2月 18 22:19:19 debian dhcpd[28741]: DHCPOFFER on 172.17.0.2 to 52:54:00:12:34:56 (debian) via docker0
+2月 18 22:19:19 debian dhcpd[28741]: DHCPREQUEST for 172.17.0.2 (172.17.0.1) from 52:54:00:12:34:56 (debian) via docker0
+2月 18 22:19:19 debian dhcpd[28741]: DHCPACK on 172.17.0.2 to 52:54:00:12:34:56 (debian) via docker0
+2月 18 22:19:28 debian dhcpd[28741]: DHCPDISCOVER from 52:54:00:12:34:56 via docker0
+2月 18 22:19:29 debian dhcpd[28741]: DHCPOFFER on 172.17.0.3 to 52:54:00:12:34:56 (debian) via docker0
+2月 18 22:19:29 debian dhcpd[28741]: DHCPREQUEST for 172.17.0.3 (172.17.0.1) from 52:54:00:12:34:56 (debian) via docker0
+2月 18 22:19:29 debian dhcpd[28741]: DHCPACK on 172.17.0.3 to 52:54:00:12:34:56 (debian) via docker0
+2月 18 22:22:08 debian dhcpd[28741]: DHCPRELEASE of 172.17.0.3 from 52:54:00:12:34:56 (debian) via docker0 (found)
+```
+
+### 方法五(推荐)
+
+1. 比如安卓手机无法root(你用termux安装了arm64_linux也是需要root才能操作systemctl和br的)，操作不了systemctl(即使用不了libvirtd)，操作不了br0(要root权限才行)，推荐这种方法
+
+2. 我们用nat模式给qemu虚拟机分配网络，进qemu虚拟机内执行`ifconfig ethx ip/mask up`手动给虚拟机修改为一个和host宿主机相同网段的ip，但是此时虚拟机无法ping通host宿主机的网关(也即家庭路由器)，自然就算配置了dns为233.5.5.5或网关，也无法访问baidu这种外网。但是我们在虚拟机内安装frr虚拟路由器即可，这个frr虚拟路由器连接了host宿主机和qemu虚拟机。
+
+3. 或者我们用nat模式给qemu虚拟机分配网络，此时进去qemu虚拟机，是可以访问baidu这种外网的，但是此时host宿主机和qemu虚拟机由于使用的nat模式，也不再同一网段，无法互通，我们通过在qemu虚拟机里安装frr虚拟路由器让host和qemu虚拟机互通。
+
+#### 教程
+
+待更新..
+
+#### 方法五额外的用途
+
+把无法root的安卓手机当clash的旁路网关用，这样其它设备所有流量都能走vpn了，请参考：
+
+`https://blog.serenader.me/shi-yong-pve-yun-xing-clash-pang-lu-you-xu-ni-ji-shi-xian-tou-ming-dai-li`
