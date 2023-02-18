@@ -375,7 +375,7 @@ PING www.a.shifen.com (39.156.66.14) 56(84) bytes of data.
 64 bytes from 39.156.66.14 (39.156.66.14): icmp_seq=4 ttl=52 time=8.38 ms
 ```
 
-说明(如果baidu这种外网无法访问，请手动加入如下内容)：
+说明(如果baidu这种外网无法访问，请手动加入如下内容，其实只加个223.5.5.5即可)：
 
 ```
 root@debian:~# more /etc/resolv.conf
@@ -384,6 +384,38 @@ search example.org
 nameserver 172.17.0.1
 nameserver 223.5.5.5
 nameserver 192.168.0.1
+```
+
+虚拟机网络情况如下：
+
+```
+root@debian:~# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global dynamic enp0s1
+       valid_lft 364sec preferred_lft 364sec
+    inet 172.17.0.3/16 brd 172.17.255.255 scope global secondary dynamic enp0s1
+       valid_lft 378sec preferred_lft 378sec
+    inet6 fe80::5054:ff:fe12:3456/64 scope link 
+       valid_lft forever preferred_lft forever
+root@debian:~# ip route
+default via 172.17.0.1 dev enp0s1 
+default via 172.17.0.1 dev enp0s1 proto dhcp src 172.17.0.2 metric 100 
+172.17.0.0/16 dev enp0s1 proto kernel scope link src 172.17.0.2 
+172.17.0.1 dev enp0s1 proto dhcp scope link src 172.17.0.2 metric 100 
+root@debian:~# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 enp0s1
+0.0.0.0         172.17.0.1      0.0.0.0         UG    100    0        0 enp0s1
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 enp0s1
+172.17.0.1      0.0.0.0         255.255.255.255 UH    100    0        0 enp0s1
 ```
 
 dhcp后台打印如下：
@@ -416,9 +448,11 @@ dhcp后台打印如下：
 
 1. 比如安卓手机无法root(你用termux安装了arm64_linux也是需要root才能操作systemctl和br的)，操作不了systemctl(即使用不了libvirtd)，操作不了br0(要root权限才行)，推荐这种方法
 
-2. 我们用nat模式给qemu虚拟机分配网络，进qemu虚拟机内执行`ifconfig ethx ip/mask up`手动给虚拟机修改为一个和host宿主机相同网段的ip，但是此时虚拟机无法ping通host宿主机的网关(也即家庭路由器)，自然就算配置了dns为233.5.5.5或网关，也无法访问baidu这种外网。但是我们在虚拟机内安装frr虚拟路由器即可，这个frr虚拟路由器连接了host宿主机和qemu虚拟机。
+2. 而且我们安卓手机也无法安装dhcp-server
 
-3. 或者我们用nat模式给qemu虚拟机分配网络，此时进去qemu虚拟机，是可以访问baidu这种外网的，但是此时host宿主机和qemu虚拟机由于使用的nat模式，也不再同一网段，无法互通，我们通过在qemu虚拟机里安装frr虚拟路由器让host和qemu虚拟机互通。
+3. 可能行不通的方法：我们用nat模式给qemu虚拟机分配网络，进qemu虚拟机内执行`ifconfig ethx ip/mask up`手动给虚拟机修改为一个和host宿主机相同网段的ip，但是此时虚拟机无法ping通host宿主机的网关(也即家庭路由器)，自然就算配置了dns为233.5.5.5或网关，也无法访问baidu这种外网。但是我们在虚拟机内安装frr虚拟路由器即可，这个frr虚拟路由器连接了host宿主机和qemu虚拟机。
+
+4. 大有可能行得通的方法：或者我们用nat模式给qemu虚拟机分配网络，此时进去qemu虚拟机，是可以访问baidu这种外网的，但是此时host宿主机和qemu虚拟机由于使用的nat模式，也不再同一网段，无法互通，我们通过在qemu虚拟机里安装frr虚拟路由器让host和qemu虚拟机互通。
 
 #### 教程
 
@@ -429,3 +463,7 @@ dhcp后台打印如下：
 把无法root的安卓手机当clash的旁路网关用，这样其它设备所有流量都能走vpn了，请参考：
 
 `https://blog.serenader.me/shi-yong-pve-yun-xing-clash-pang-lu-you-xu-ni-ji-shi-xian-tou-ming-dai-li`
+
+### 方法六(还没试过)
+
+在termux中安装dhcp或virt-manager，然后在termux中配置，启动好服务，然后进termux的linux系统，linux系统应该有termux中启动的服务，然后linux系统中用virsh或qemu命令行+dhcp启动arm64虚拟机。
