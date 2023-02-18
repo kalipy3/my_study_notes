@@ -117,7 +117,7 @@ PING 192.168.0.125 (192.168.0.125) 56(84) bytes of data.
 
 ![Image](./img/image_2023-02-12-17-15-59.png)
 
-### 用docker0作为虚拟机网桥试试
+### 用docker0作为虚拟机网桥试试(csm/centos 非netplan /etc/sysconfig/xx/为dhcp)
 
 xml配置如下：
 
@@ -154,7 +154,11 @@ docker0         8000.02423e044622       no              tap0
 
 然而虚拟机还是不能ping通`www.baidu.com`(改/etc/resovl.conf文件也没用)
 
-### 笔记本无线网卡到底怎么让qemu虚拟机可以使用br呢？
+#### ubuntu在netplan下(无论netplan是dhcp还是非dhcp)，或者卸载了netplan情况下，都是：
+
+host和qemu可以互通，可以Ping通baidu
+
+### 笔记本无线网卡到底怎么让qemu虚拟机可以使用br呢？(csm/centos dhcp情况下)
 
 我们使用qemu自带的default网络来创建br，执行如下命令编辑配置文件:
 
@@ -254,11 +258,11 @@ sudo virsh destroy csm
 sudo virsh start csm
 ```
 
-### 方法三
+### 方法三(csm/centos dhcp环境下)
 
 使用isc-dhcp-server，我在笔记本上用netplan的无线网卡的br0试了下，发现csm是可以正常从isc-dhcpserver获取到ip的，host和csm之间也可以互相Ping通，但是无线网卡不支持br，所有会导致host和csm都ping不通baidu这种外网。
 
-### 方法四(推荐)
+### 方法四(推荐，ubuntu/netplan中dhcp:yes的情况下试的)
 
 网络环境如下：
 
@@ -464,6 +468,166 @@ dhcp后台打印如下：
 
 `https://blog.serenader.me/shi-yong-pve-yun-xing-clash-pang-lu-you-xu-ni-ji-shi-xian-tou-ming-dai-li`
 
-### 方法六(还没试过)
+### 方法六(试过，在termux安装不了)
 
 在termux中安装dhcp或virt-manager，然后在termux中配置，启动好服务，然后进termux的linux系统，linux系统应该有termux中启动的服务，然后linux系统中用virsh或qemu命令行+dhcp启动arm64虚拟机。
+
+---
+
+### 注意qemu的user模式虽然host和qemu不通，但是apt-get能访问外网(tap模式则是apt-get和ping baidu都不通，host和qemu也不通，但是tap模式能够自动生成arp，user模式不能自动生成arp，当然，user模式和tap模式都不能生成路由表)
+
+
+ping不通baidu.com，但是apt-get能访问外网：
+
+```
+root@debian:~# ping www.baidu.com
+PING www.a.shifen.com (39.156.66.18) 56(84) bytes of data.
+^C
+--- www.a.shifen.com ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time 65ms
+
+root@debian:~# apt-get update
+Hit:1 http://mirrors.tuna.tsinghua.edu.cn/debian buster InRelease
+Get:2 http://mirrors.tuna.tsinghua.edu.cn/debian buster-updates InRelease [56.6 kB]
+Get:3 http://security.debian.org/debian-security buster/updates InRelease [34.8 kB]
+Get:4 http://security.debian.org/debian-security buster/updates/main Sources [306 kB]
+Get:5 http://security.debian.org/debian-security buster/updates/main arm64 Packages [423 kB]
+Fetched 821 kB in 29s (27.8 kB/s)                                              
+Reading package lists... Done
+root@debian:~# ping www.baidu.com
+PING www.a.shifen.com (39.156.66.14) 56(84) bytes of data.
+^C
+--- www.a.shifen.com ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time 69ms
+
+root@debian:~# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic enp0s1
+       valid_lft 86131sec preferred_lft 86131sec
+    inet6 fec0::5054:ff:fe12:3456/64 scope site dynamic mngtmpaddr noprefixroute 
+       valid_lft 86301sec preferred_lft 14301sec
+    inet6 fe80::5054:ff:fe12:3456/64 scope link 
+       valid_lft forever preferred_lft forever
+```
+
+再看，为什么ping baidu.com不通，但是有网？kalipy推测apt-get可能走的是ipv6：
+
+```
+root@debian:~# apt-get update
+Hit:1 http://mirrors.tuna.tsinghua.edu.cn/debian buster InRelease
+Hit:2 http://mirrors.tuna.tsinghua.edu.cn/debian buster-updates InRelease
+0% [Connecting to debian.map.fastlydns.net (2a04:4e42:12::644)]
+```
+
+再看：
+
+```
+root@debian:~# ping 192.168.0.1
+PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
+^C
+--- 192.168.0.1 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+root@debian:~# ip route
+default via 10.0.2.2 dev enp0s1 
+default via 10.0.2.2 dev enp0s1 proto dhcp src 10.0.2.15 metric 100 
+10.0.2.0/24 dev enp0s1 proto kernel scope link src 10.0.2.15 
+10.0.2.2 dev enp0s1 proto dhcp scope link src 10.0.2.15 metric 100 
+root@debian:~# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         10.0.2.2        0.0.0.0         UG    0      0        0 enp0s1
+0.0.0.0         10.0.2.2        0.0.0.0         UG    100    0        0 enp0s1
+10.0.2.0        0.0.0.0         255.255.255.0   U     0      0        0 enp0s1
+10.0.2.2        0.0.0.0         255.255.255.255 UH    100    0        0 enp0s1
+```
+
+--- 
+
+宿主机：
+
+```
+[I] kalipy@debian ~/b/my_study_notes> sudo route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 wlp8s0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 wlp8s0
+[I] kalipy@debian ~/b/my_study_notes> sudo ip route
+default via 192.168.0.1 dev wlp8s0 
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown 
+192.168.0.0/24 dev wlp8s0 proto kernel scope link src 192.168.0.166
+```
+
+虚拟机：
+
+```
+root@debian:~# more /etc/netplan/00-installer-config.yaml 
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s1:
+      dhcp4: no
+      addresses: [192.168.0.67/24]
+      nameservers:
+          addresses: [223.5.5.5]
+      gateway4: 192.168.0.1
+root@debian:~# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.67/24 brd 192.168.0.255 scope global enp0s1
+       valid_lft forever preferred_lft forever
+    inet6 fec0::5054:ff:fe12:3456/64 scope site dynamic mngtmpaddr noprefixroute 
+       valid_lft 86261sec preferred_lft 14261sec
+    inet6 fe80::5054:ff:fe12:3456/64 scope link 
+       valid_lft forever preferred_lft forever
+root@debian:~# ip route
+default via 192.168.0.1 dev enp0s1 proto static 
+192.168.0.0/24 dev enp0s1 proto kernel scope link src 192.168.0.67 
+root@debian:~# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 enp0s1
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 enp0s1
+```
+
+可以看到，在虚拟机中，依然什么都ping不通
+
+手动给虚拟机添加arp条目也不行(宿主机也加了)：
+
+```
+root@debian:~# arp -i enp0s1 -s 192.168.0.166 2a:fb:b6:a1:95:27
+root@debian:~# arp -i enp0s1 -s 192.168.0.1 04:95:e6:3e:14:a0
+root@debian:~# arp
+Address                  HWtype  HWaddress           Flags Mask            Iface
+192.168.0.1              ether   04:95:e6:3e:14:a0   CM                    enp0s1
+192.168.0.166            ether   2a:fb:b6:a1:95:27   CM                    enp0s1
+```
+
+### 奇怪！！！！！！！！！！！！！！！！！！！！
+
+在我debian电脑上，user模式下(用wifi的情况下)，把qemu内的netplan卸载情况下，啥都ping不通(apt-get update用的ipv6可以访问外网除外)
+
+在我安卓手机上(开了wifi的情况下)，user模式下，没安装过netplan和nmcli情况下，啥都可以ping通，包括192.168.0.1网关，ip addr显示ip为10.2.xx.xx这样的
+
+### 测试得控制变量
+
+netplan、nmcli、qemu内的dhcp、宿主机isc-dhcp的dhcp、ubuntu/centos、不开docker/tap0和开docker/tap0，root和非root运行qemu-system-aarch64，pc的br0是否用netplan启用过然后手动brctl删除恢复过(不知道不重启电脑的情况下，会不会对qemu获取网络造成影响)
+
+### 总结
+
+宿主机机器环境不同，效果就会不同，完了，我什么都不懂了，哭/(ㄒoㄒ)/~~
