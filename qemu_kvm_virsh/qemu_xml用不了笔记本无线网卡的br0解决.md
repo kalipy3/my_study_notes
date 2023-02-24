@@ -631,3 +631,197 @@ netplan、nmcli、qemu内的dhcp、宿主机isc-dhcp的dhcp、ubuntu/centos、�
 ### 总结
 
 宿主机机器环境不同，效果就会不同，完了，我什么都不懂了，哭/(ㄒoㄒ)/~~
+
+### 最好的方法
+
+
+
+[I] kalipy@debian ~/b/my_study_notes> sudo systemctl status isc-dhcp-server.service
+● isc-dhcp-server.service - LSB: DHCP server
+   Loaded: loaded (/etc/init.d/isc-dhcp-server; generated)
+   Active: inactive (dead) since Sun 2023-02-19 12:52:09 CST; 2h 52min ago
+
+root@debian ~# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: enp0s1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.3/16 brd 172.17.255.255 scope global enp0s1
+       valid_lft forever preferred_lft forever
+3: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 52:54:00:12:34:58 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.67/24 brd 192.168.0.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+4: enp0s2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 52:54:00:12:34:57 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.66/24 brd 192.168.0.255 scope global enp0s2
+       valid_lft forever preferred_lft forever
+root@debian ~# more /etc/netplan/00-installer-config.yaml 
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s1:
+      dhcp4: no
+      addresses: [172.17.0.3/16]
+      gateway4: 172.17.0.1
+    enp0s2:
+      dhcp4: no
+      addresses: [192.168.0.66/24]
+      gateway4: 172.17.0.1
+    enp0s3:
+      dhcp4: no
+      addresses: [192.168.0.67/24]
+      gateway4: 172.17.0.1
+
+root@debian ~# route add -net 192.168.0.0 netmask 255.255.255.0 gw 172.17.0.1
+root@debian ~# ip route
+default via 172.17.0.1 dev enp0s1 
+default via 172.17.0.1 dev enp0s1 proto static 
+172.17.0.0/16 dev enp0s1 proto kernel scope link src 172.17.0.3 
+192.168.0.0/24 via 172.17.0.1 dev enp0s1 
+192.168.0.0/24 dev enp0s2 proto kernel scope link src 192.168.0.66 
+192.168.0.0/24 dev enp0s3 proto kernel scope link src 192.168.0.67 
+root@debian ~# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 enp0s1
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 enp0s1
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 enp0s1
+192.168.0.0     172.17.0.1      255.255.255.0   UG    0      0        0 enp0s1
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 enp0s2
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 enp0s3
+root@debian ~# ping 192.168.0.1
+PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
+64 bytes from 192.168.0.1: icmp_seq=1 ttl=63 time=2.33 ms
+64 bytes from 192.168.0.1: icmp_seq=2 ttl=63 time=4.43 ms
+^C
+--- 192.168.0.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 5ms
+rtt min/avg/max/mdev = 2.334/3.381/4.429/1.049 ms
+root@debian ~# ping 192.168.0.102
+PING 192.168.0.102 (192.168.0.102) 56(84) bytes of data.
+64 bytes from 192.168.0.102: icmp_seq=1 ttl=63 time=422 ms
+64 bytes from 192.168.0.102: icmp_seq=2 ttl=63 time=394 ms
+^C
+--- 192.168.0.102 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 4ms
+rtt min/avg/max/mdev = 393.854/407.754/421.655/13.915 ms
+root@debian ~# 
+
+root@debian ~# ping www.baidu.com
+PING www.a.shifen.com (39.156.66.18) 56(84) bytes of data.
+64 bytes from 39.156.66.18 (39.156.66.18): icmp_seq=1 ttl=52 time=10.1 ms
+64 bytes from 39.156.66.18 (39.156.66.18): icmp_seq=2 ttl=52 time=10.7 ms
+
+
+
+
+root@debian ~# ping 192.168.0.1
+PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
+64 bytes from 192.168.0.1: icmp_seq=1 ttl=63 time=2.56 ms
+64 bytes from 192.168.0.1: icmp_seq=2 ttl=63 time=1.97 ms
+64 bytes from 192.168.0.1: icmp_seq=3 ttl=63 time=2.46 ms
+^C
+--- 192.168.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 18ms
+rtt min/avg/max/mdev = 1.974/2.328/2.556/0.256 ms
+root@debian ~# arp
+Address                  HWtype  HWaddress           Flags Mask            Iface
+192.168.0.1                      (incomplete)                              enp0s2
+172.17.0.1               ether   02:42:fc:14:f4:75   C                     enp0s3
+172.17.0.1               ether   a2:f0:9a:8d:fc:61   C                     enp0s1
+
+
+但是我们发现现在虚拟机ping 宿主机192.168.0.xx和百度都没问题了，但是宿主机Ping不通虚拟机怎么办，解决：
+
+宿主机执行：
+
+
+[I] kalipy@debian ~/b/my_study_notes> sudo route add -net 192.168.0.0 netmask 255.255.255.0 gw 172.17.0.1
+[I] kalipy@debian ~/b/my_study_notes> ping 192.168.0.67
+PING 192.168.0.67 (192.168.0.67) 56(84) bytes of data.
+From 172.17.0.1 icmp_seq=1 Destination Host Unreachable
+From 172.17.0.1 icmp_seq=2 Destination Host Unreachable
+From 172.17.0.1 icmp_seq=3 Destination Host Unreachable
+^C
+--- 192.168.0.68 ping statistics ---
+5 packets transmitted, 0 received, +3 errors, 100% packet loss, time 102ms
+pipe 4
+[I] kalipy@debian ~/b/my_study_notes> ping 192.168.0.66
+PING 192.168.0.66 (192.168.0.66) 56(84) bytes of data.
+64 bytes from 192.168.0.66: icmp_seq=1 ttl=64 time=2.29 ms
+64 bytes from 192.168.0.66: icmp_seq=2 ttl=64 time=1.37 ms
+^C
+--- 192.168.0.66 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 2ms
+rtt min/avg/max/mdev = 1.370/1.828/2.287/0.460 ms
+[I] kalipy@debian ~/b/my_study_notes> ping 192.168.0.67
+PING 192.168.0.67 (192.168.0.67) 56(84) bytes of data.
+64 bytes from 192.168.0.67: icmp_seq=1 ttl=64 time=2.53 ms
+64 bytes from 192.168.0.67: icmp_seq=2 ttl=64 time=0.986 ms
+
+
+问题：
+一旦宿主机添加了上面的路由，那么虚拟机和宿主机就会都无法ping通192.168.0.1了，但是不影响访问baidu和互相用192.168.0.xx ping通，但是宿主机和虚拟机之外的192.168.0.yy，虚拟机和宿主机都无法ping通了
+
+
+解决：
+
+宿主机执行：
+
+[I] kalipy@debian ~/b/my_study_notes> sudo route add -net 192.168.0.0 netmask 255.255.255.0 gw 0.0.0.0
+SIOCADDRT: 无效的参数
+[I] kalipy@debian ~/b/my_study_notes> sudo route add -net 192.168.0.0 netmask 255.255.255.0 gw 192.168.0.1
+[I] kalipy@debian ~/b/my_study_notes> sudo route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 wlp8s0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.0.0     192.168.0.1     255.255.255.0   UG    0      0        0 docker0
+192.168.0.0     172.17.0.1      255.255.255.0   UG    0      0        0 docker0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 wlp8s0
+[I] kalipy@debian ~/b/my_study_notes> ping 192.168.0.102
+PING 192.168.0.102 (192.168.0.102) 56(84) bytes of data.
+From 172.17.0.1 icmp_seq=1 Destination Host Unreachable
+From 172.17.0.1 icmp_seq=2 Destination Host Unreachable
+From 172.17.0.1 icmp_seq=3 Destination Host Unreachable
+^C
+--- 192.168.0.102 ping statistics ---
+5 packets transmitted, 0 received, +3 errors, 100% packet loss, time 111ms
+pipe 4
+[I] kalipy@debian ~/b/my_study_notes> sudo route add -net 192.168.0.0 netmask 255.255.255.0 gw 192.168.0.1 wlp8s0
+[I] kalipy@debian ~/b/my_study_notes> sudo route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 wlp8s0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.0.0     192.168.0.1     255.255.255.0   UG    0      0        0 wlp8s0
+192.168.0.0     192.168.0.1     255.255.255.0   UG    0      0        0 docker0
+192.168.0.0     172.17.0.1      255.255.255.0   UG    0      0        0 docker0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 wlp8s0
+[I] kalipy@debian ~/b/my_study_notes> ping 192.168.0.102
+PING 192.168.0.102 (192.168.0.102) 56(84) bytes of data.
+64 bytes from 192.168.0.102: icmp_seq=1 ttl=64 time=301 ms
+From 192.168.0.1: icmp_seq=2 Redirect Host(New nexthop: 192.168.0.102)
+64 bytes from 192.168.0.102: icmp_seq=2 ttl=64 time=221 ms
+64 bytes from 192.168.0.102: icmp_seq=3 ttl=64 time=146 ms
+64 bytes from 192.168.0.102: icmp_seq=4 ttl=64 time=66.2 ms
+^C
+--- 192.168.0.102 ping statistics ---
+5 packets transmitted, 4 received, 20% packet loss, time 6ms
+rtt min/avg/max/mdev = 66.152/183.526/301.368/87.345 ms
+[I] kalipy@debian ~/b/my_study_notes> ping 192.168.0.1
+PING 192.168.0.1 (192.168.0.1) 56(84) bytes of data.
+64 bytes from 192.168.0.1: icmp_seq=1 ttl=64 time=7.85 ms
+64 bytes from 192.168.0.1: icmp_seq=2 ttl=64 time=3.32 ms
+^C
+--- 192.168.0.1 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1ms
+rtt min/avg/max/mdev = 3.323/5.586/7.850/2.264 ms
+[I] kalipy@debian ~/b/my_study_notes> ping 192.168.0.102
+PING 192.168.0.102 (192.168.0.102) 56(84) bytes of data.
+64 bytes from 192.168.0.102: icmp_seq=1 ttl=64 time=130 ms
+From 192.168.0.1: icmp_seq=2 Redirect Host(New nexthop: 192.168.0
