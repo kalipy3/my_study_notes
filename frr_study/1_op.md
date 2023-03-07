@@ -1272,6 +1272,13 @@ netlink_parse_info():
  * startup -> Are we reading in under startup conditions? passed to
  *            the filter.
  */
+ /*
+    int (*filter)(struct nlmsghdr *, ns_id_t, int)：用于读取结果的函数指针。
+    struct nlsock *nl：netlink套接字信息。
+    const struct zebra_dplane_info *zns：zebra namespace数据。
+    int count：要读取的消息数，0表示尽可能多。
+    bool startup：是否在启动条件下读取，传递给过滤器。
+ */
 int netlink_parse_info(int (*filter)(struct nlmsghdr *, ns_id_t, int),
 		       struct nlsock *nl, const struct zebra_dplane_info *zns,
 		       int count, bool startup)
@@ -1290,6 +1297,8 @@ int netlink_parse_info(int (*filter)(struct nlmsghdr *, ns_id_t, int),
 		if (count && read_in >= count)
 			return 0;
 
+        //netlink_recv_msg - 接收netlink消息。返回-1表示错误，返回0表示读取会被阻塞，返回接收到的字节数
+        //ecvmsg(nl->sock, msg, 0);
 		status = netlink_recv_msg(nl, &msg);
 		if (status == -1)
 			return -1;
@@ -1297,10 +1306,64 @@ int netlink_parse_info(int (*filter)(struct nlmsghdr *, ns_id_t, int),
 			break;
 
 		read_in++;
+        /*
+        struct nlmsghdr {
+            //消息长度，包括头部长度
+        	__u32		nlmsg_len;	/* Length of message including header */
+            //消息类型，表示消息包含的内容
+        	__u16		nlmsg_type;	/* Message content */
+            /*
+            NLMSG_NOOP：没有操作，只作为回应的占位符。
+            NLMSG_ERROR：发生错误，向对端报告错误信息。
+            NLMSG_DONE：指示多消息序列的结束。
+            NLMSG_OVERRUN：接收缓冲区溢出。
+            其他取值表示用户定义的消息类型。
+            */
+            //附加标志，使消息内容更具可读性
+        	__u16		nlmsg_flags;	/* Additional flags */
+            /*
+            NLM_F_REQUEST：此消息请求操作
+            NLM_F_MULTI：此消息为多消息序列的一部分
+            NLM_F_ACK：需要对消息进行确认
+            NLM_F_ECHO：同时发送通知消息
+            NLM_F_DUMP_INTR：多消息序列提前中止
+            NLM_F_DUMP_FILTERED：多消息序列已过滤
+            NLM_F_ROOT：查找根节点
+            NLM_F_MATCH：返回精确匹配项
+            NLM_F_ATOMIC：原子请求处理
+            NLM_F_ATOMIC_ACK：ACK应该作为一个原子的消息处理
+            */
+            //seq
+        	__u32		nlmsg_seq;	/* Sequence number */
+            //发送进程的端口ID
+        	__u32		nlmsg_pid;	/* Sending process port ID */
+        };
+        /* Socket interface to kernel */
+        struct nlsock {
+        	int sock;
+        	int seq;
+        	struct sockaddr_nl snl;
+        	char name[64];
+        
+        	uint8_t *buf;
+        	size_t buflen;
+        };
+        */
+        //nl->buf 存储了收到的消息数据，将其转换为 nlmsghdr 结构的指针，以便能够读取其中包含的消息头部信息
 		for (h = (struct nlmsghdr *)nl->buf;
+             //判断给定消息头是否有效并且没有被截断，NLMSG_OK(nlh, len) 返回一个非零值表示消息有效，返回零表示无效或被截断
 		     (status >= 0 && NLMSG_OK(h, (unsigned int)status));
+             //用于获取指向下一个消息的指针
+             //在接收到一组具有相同消息类型的消息后，获取指向下一个消息的指针以继续解析
 		     h = NLMSG_NEXT(h, status)) {
+             /*
+            #define NLMSG_NEXT(nlh, len) \
+                ((len) -= NLMSG_ALIGN((nlh)->nlmsg_len), \
+                 (struct nlmsghdr *)((char *)(nlh) + NLMSG_ALIGN((nlh)->nlmsg_len)))
+            NLMSG_NEXT(nlh, len) 首先通过 nlmsg_len 获取当前消息的长度，并使用 NLMSG_ALIGN((nlh)->nlmsg_len) 得到将长度对齐后的长度。然后将 len 减去对齐后的长度，这样就可以计算出新的位置。最后，将指针转移到 NLMSG_ALIGN(nlh->nlmsg_len) 个字节的位置，这就使它指向当前消息的下一个消息头
+             */
 			/* Finish of reading. */
+            //NLMSG_DONE 是一个表示消息序列结束的消息类型。当用户空间向内核发起的某些多消息查询操作完成时，内核通过发送 NLMSG_DONE 消息来通知用户空间，表示消息序列已经结束，用户空间需停止等待，可以开始处理已经收到的消息了。NLMSG_DONE 本身不包含任何信息，仅用于表示多条消息的传输已经完成
 			if (h->nlmsg_type == NLMSG_DONE)
 				return ret;
 
@@ -1310,6 +1373,8 @@ int netlink_parse_info(int (*filter)(struct nlmsghdr *, ns_id_t, int),
 					nl, h, zns->is_cmd, startup);
 
 				if (err == 1) {
+                    //判断消息类型是否为多消息序列
+                    //如果消息头中的 nlmsg_flags 字段包含 NLM_F_MULTI 标志位，则表示这是一个多消息序列的一部分，后面还会有更多的消息跟进；如果没有包含，则表示这是一个单个消息。这个信息的获取可以帮助用户空间区分和处理来自内核的不同类型的消息
 					if (!(h->nlmsg_flags & NLM_F_MULTI))
 						return 0;
 					continue;
@@ -1324,6 +1389,7 @@ int netlink_parse_info(int (*filter)(struct nlmsghdr *, ns_id_t, int),
 			 * missed data from the kernel.  At this point in time
 			 * lets just note that this is happening.
 			 */
+            //检查消息是否为被中断的多消息序列，如果消息头的 nlmsg_flags 字段包含 NLM_F_DUMP_INTR 标志位，表示这是一个被中断的多消息序列。这可能发生在发出多消息查询请求时，内核仅发送了部分数据，但仍回复了 NLMSG_DONE 消息，此时表明查询请求已被中断
 			if (h->nlmsg_flags & NLM_F_DUMP_INTR)
 				flog_err(
 					EC_ZEBRA_NETLINK_BAD_SEQUENCE,
@@ -1349,6 +1415,7 @@ int netlink_parse_info(int (*filter)(struct nlmsghdr *, ns_id_t, int),
 				continue;
 			}
 
+            //netlink_information_fetch()
 			error = (*filter)(h, zns->ns_id, startup);
 			if (error < 0) {
 				zlog_debug("%s filter function error",
@@ -1358,6 +1425,7 @@ int netlink_parse_info(int (*filter)(struct nlmsghdr *, ns_id_t, int),
 		}
 
 		/* After error care. */
+        //当一个进程使用 recv() 或 recvfrom() 接受一个消息时，内核将检查缓冲区是否能够容纳整个消息。如果缓冲区的大小小于消息的大小，那么内核将截断消息，并且将 MSG_TRUNC 标志设置为 msg_flags。这意味着接收方只能获得消息的部分内容
 		if (msg.msg_flags & MSG_TRUNC) {
 			flog_err(EC_ZEBRA_NETLINK_LENGTH_ERROR,
 				 "%s error: message truncated", nl->name);
@@ -1381,7 +1449,7 @@ netlink_information_fetch():
  * Dispatch an incoming netlink message; used by the zebra main pthread's
  * netlink event reader.
  */
-static int netlink_information_fetch(struct nlmsghdr *h, ns_id_t ns_id,//kalipy
+static int netlink_information_fetch(struct nlmsghdr *h, ns_id_t ns_id,
 				     int startup)
 {
 	/*
@@ -1458,11 +1526,41 @@ static int netlink_information_fetch(struct nlmsghdr *h, ns_id_t ns_id,//kalipy
 netlink_route_change():
 
 ```
+/* 以这个为例：
+	switch (h->nlmsg_type) {
+	case RTM_NEWROUTE:
+		return netlink_route_change(h, ns_id, startup);
+*/
 int netlink_route_change(struct nlmsghdr *h, ns_id_t ns_id, int startup)
 {
 	int len;
 	struct rtmsg *rtm;
+    /*
+    struct rtmsg {
+    	unsigned char		rtm_family;
+    	unsigned char		rtm_dst_len;
+    	unsigned char		rtm_src_len;
+        //服务类型（TOS）
+    	unsigned char		rtm_tos;
+        //路由所在的路由表 ID 
+    	unsigned char		rtm_table;	/* Routing table id */
+        //比如OSPF
+    	unsigned char		rtm_protocol;	/* Routing protocol; see below	*/
+        //路由的可见性范围，即路由所适用的网络范围
+    	unsigned char		rtm_scope;	/* See below */	
+        //路由的类型，如 UNICAST、LOCAL、BROADCAST、MULTICAST 等
+    	unsigned char		rtm_type;	/* See below	*/
+        //路由的标志，如 RTM_F_NOTIFY、RTM_F_CLONED、RTM_F_EQUALIZE 等 
+    	unsigned		rtm_flags;
+        /*
+        RTM_F_NOTIFY：当路由表的条目被更新或删除时，内核会向监视该路由表的进程发送通知消息。
+        RTM_F_CLONED：路由在主机间复制，通常用于进行负载均衡或链路故障转移。
+        RTM_F_EQUALIZE：路由等化（Route Equalization），即在多条拥有相同目标的路由路径中，选择一条最佳路径作为默认路径
+        */
+    };
+    */
 
+    //用于返回位于 netlink 消息头（nlmsghdr）之后的有效负载数据body的指针
 	rtm = NLMSG_DATA(h);
 
 	if (!(h->nlmsg_type == RTM_NEWROUTE || h->nlmsg_type == RTM_DELROUTE)) {
@@ -1500,8 +1598,16 @@ int netlink_route_change(struct nlmsghdr *h, ns_id_t ns_id, int startup)
 			   nl_rttype_to_str(rtm->rtm_type),
 			   nl_rtproto_to_str(rtm->rtm_protocol), ns_id);
 
-
+    //得到rtmsg消息体的长度
 	len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct rtmsg));
+    /*
+    #define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
+    
+    其中，len 是消息体（有效负载）的长度，NLMSG_HDRLEN 是消息头的长度。因此，NLMSG_LENGTH(len) 的结果就是计算消息的总长度
+    h->nlmsg_len 来获取接收到消息的总长度，并从中减去 NLMSG_LENGTH(sizeof(struct rtmsg)) 的结果，就可以得到消息体的长度，即表示路由信息的负载数据部分的大小
+
+    通过这个计算得到的长度并不一定等于消息中路由信息的确切长度，可能还包括一些填充字节或其他附加数据
+    */
 	if (len < 0) {
 		zlog_err(
 			"%s: Message received from netlink is of a broken size: %d %zu",
@@ -1515,6 +1621,13 @@ int netlink_route_change(struct nlmsghdr *h, ns_id_t ns_id, int startup)
 	 * handling on Linux because ~reasons~.
 	 */
 	if (rtm->rtm_type == RTN_MULTICAST)
+    /*
+    该路由是一个组播（多播）路由，它用于将数据传输给多个目的地，而不是仅传输给单个目的地。多播路由具有以下特点：
+    
+        它可以将数据传输给同一组内的所有主机。
+        它可以在不同子网之间传输数据，同时避免了广播带来的问题。
+        它可以在局域网中节省带宽，因为数据仅传输一次，并在所有主机上接收
+    */
 		return 0;
 
 	netlink_route_change_read_unicast(h, ns_id, startup);
@@ -1543,6 +1656,43 @@ int netlink_route_change_read_unicast_internal(struct nlmsghdr *h,
 	int len;
 	struct rtmsg *rtm;
 	struct rtattr *tb[RTA_MAX + 1];
+    /*
+    /* 
+       Generic structure for encapsulation of optional route information.
+       It is reminiscent of sockaddr, but with sa_family replaced
+       with attribute type.
+     */
+    struct rtattr {
+    	unsigned short	rta_len;
+    	unsigned short	rta_type;
+    };
+    RTA_DATA 是在 netlink 库中获取消息属性 payload 的一个宏定义，可以返回消息属性对应的数据
+
+    rtattr 是一个用于封装路由信息中的可选属性的结构体。
+
+    rtattr 结构体类似于 sockaddr 结构体（sockaddr 是用于通信协议的地址结构体），但是把地址族（sa_family）替换成了属性类型（rta_type）。
+    
+    对于每个路由信息，可能会有多个可选属性，因此内核会使用一个包含多个 rtattr 结构体的链表（即一个 struct nlattr 数组）来描述这些属性。应用程序可以根据 nlattr 数组中每个元素的 type 和 len 字段，来获取每个属性的值和长度，以进行属性的解析和处理
+        
+    rtattr 结构体中包含了两个字段：
+    
+        rta_len ：代表属性的总长度，包括 rta_len 和属性数据的长度（以字节为单位）。
+        rta_type ：表示属性的类型，每种类型对应一个整数值。常见的属性类型如下表：
+
+        属性类型	含义
+        RTA_DST	路由目标地址（destination）
+        RTA_SRC	路由源地址（source）
+        RTA_IIF	入接口索引（index）：指出数据包从哪个接口流入，如路由器的输入接口
+        RTA_OIF	出接口索引（index）：指出数据包将从哪个接口发送出去，如路由器的输出接口
+        RTA_GATEWAY	网关地址（gateway）：当需要到达不同于本地网络的目的网络时，路由器需要知道其他的网关地址
+        RTA_PRIORITY	优先级（priority）：路由的优先级，用于选择一个最合适的路由路径。通常，路由的优先级由路由协议自行决定。一个比较通用的规则是优先选择较短的路径。
+        RTA_PREFSRC	偏好源地址（preferred source）：用于源地址选择（Source Address Selection，SAS）的偏好源地址。在 IPv6 网络中，可能存在多个可以作为源地址的地址，其中一个被选择为首选地址
+        RTA_METRICS	路由度量值（metrics）：用于表示一种度量方式来选择不同的路由路径。例如，某些路由协议可以使用通信延迟作为度量来决定最优路径。当有多个路由路径可以选择时，路由度量值就很重要了
+        RTA_MULTIPATH	多路径路由（multipath）：当存在多条到达目标相同的路由，且系统支持多路径路由时，使用多路径路由可以提高系统性能。多路径路由需要将数据包等比例地分配给多条路径，以实现负载均衡和方便扩展
+        RTA_FLOW	流标记（flow）：流标记用于分类网络流量。例如，可以将视频流量分为一类，将数据流量分为 另一类，以便对不同类型的流量进行不同的服务质量（Quality of Service，QoS）处理
+        RTA_CACHEINFO	缓存信息（cache info）：路由缓存信息，用于实现路由缓存。Linux 内核提供了路由缓存机制，用于缓存一些路由信息，以提高系统性能。例如，当某个路由请求被频繁地访问时，内核可能会将这些请求缓存起来，避免重复的计算，从而提高性能。
+        RTA_TABLE	路由表 ID（route table id）：每个路由表都有一个唯一的标识符。许多路由管理操作需要指定路由表 ID。通过指定路由表 ID，可以在多个路由表中选择一个进行操作。在 Linux 内核中，常见的路由表
+    */
 	uint32_t flags = 0;
 	struct prefix p;
 	struct prefix_ipv6 src_p = {};
@@ -1593,6 +1743,7 @@ int netlink_route_change_read_unicast_internal(struct nlmsghdr *h,
 		return 0;
 	}
 
+    //len 只是附加到 NLMSG 后面消息的长度，不包含 NLMSG 头部部分
 	len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct rtmsg));
 	if (len < 0) {
 		zlog_err(
@@ -1603,6 +1754,26 @@ int netlink_route_change_read_unicast_internal(struct nlmsghdr *h,
 	}
 
 	netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(rtm), len);
+    /*
+    在 netlink 链接的路由子系统中，通常将其消息打包为一种自定义的数据格式 RTNETLINK message。在这个消息格式中，NLMSG 的 payload 是 RTMsg 的头部，而 RTMsg 的 payload 则是一个文件描述符，文件描述符中包含着 RTAttr 块，其中每个 RTAttr 再以NLMSG 的方式互相连接，构成了消息负载体。
+    
+    当使用 RTA_DATA 时，需要将其参数设置为 RTAttr 消息的头部，该头部描述了该 RTAttr 块的一些元数据信息，例如这个 RTAttr 的数据类型和该数据的长度，同时，该 RTAttr 消息头后面紧跟着的是包含了该RTAttr 的消息内容，其中可能包含一个固定长度的数据块，也可能是一个更为复杂的结构体。调用 RTA_DATA 就是为了访问该 RTAttr 块的数据（payload）
+    void netlink_parse_rtattr(struct rtattr **tb, int max, struct rtattr *rta,
+    			  int len)
+    {
+        //memset 将 tb 数组中的所有元素初始化为 NULL
+    	memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+        //len 表示当前 rtattr 剩余消息数据的长度
+        //循环枚举每一个 RTA 属性
+    	while (RTA_OK(rta, len)) {//如果 RTA_OK 返回真，表示 RTA 属性是当前 RTA 消息体中的一个元素，那么继续处理下一个字段，否则跳出循环
+    		if (rta->rta_type <= max)
+                //于是将 RTA 数据的指针保存到 tb 数组中，索引为 RTA 类型的标志值
+    			tb[rta->rta_type] = rta;
+             //指示当前消息中还有多少未遍历的属性
+    		rta = RTA_NEXT(rta, len);
+    	}
+    }
+    */
 
 	if (rtm->rtm_flags & RTM_F_CLONED)
 		return 0;
@@ -1610,6 +1781,13 @@ int netlink_route_change_read_unicast_internal(struct nlmsghdr *h,
 		return 0;
 	if (rtm->rtm_protocol == RTPROT_KERNEL)
 		return 0;
+    /*
+    若路由信息的标志中包含 RTM_F_CLONED，则直接返回 0，跳过处理下一条路由信息。RTM_F_CLONED 表示该路由信息是克隆的，也就是虚拟出来的路由信息，而不是真正的物理路由信息。
+
+    若路由信息的协议类型为 RTPROT_REDIRECT，则直接返回 0，跳过处理下一条路由信息。RTPROT_REDIRECT 表示该路由信息是重定向路由信息，即由其他设备发出的关于路由的提示消息。
+
+    若路由信息的协议类型为 RTPROT_KERNEL，则直接返回 0，跳过处理下一条路由信息。RTPROT_KERNEL 表示该路由信息是内核自己维护的路由信息。
+    */
 
 	selfroute = is_selfroute(rtm->rtm_protocol);
 
@@ -1627,12 +1805,20 @@ int netlink_route_change_read_unicast_internal(struct nlmsghdr *h,
 		return 0;
 
 	/* Table corresponding to route. */
+    /*
+    在获取路由表 table 方面，通常有以下两种方法：
+    
+        如果在路由信息消息中附带了 RTA_TABLE 的消息属性，则可以直接从中获取 table 的值。
+    
+        如果 RTA_TABLE 消息属性不存在，则可以从消息头中获取 rtm_table 字段的值，这个字段包含了路由信息要添加的路由表的编号
+    */
 	if (tb[RTA_TABLE])
 		table = *(int *)RTA_DATA(tb[RTA_TABLE]);
 	else
 		table = rtm->rtm_table;
 
 	/* Map to VRF */
+    //根据 table_id 在 VRF 中查找 VRF ID 的函数
 	vrf_id = vrf_lookup_by_table(table, ns_id);
 	if (vrf_id == VRF_DEFAULT) {
 		if (!is_zebra_valid_kernel_table(table)
@@ -1640,6 +1826,15 @@ int netlink_route_change_read_unicast_internal(struct nlmsghdr *h,
 			return 0;
 	}
 
+    /*
+    如果路由信息消息的标志 RTM_F_TRAP 被设置，则将 ZEBRA_FLAG_TRAPPED 标志位设置到 flags 变量中。RTM_F_TRAP 表示该路由信息需要捕获，即要求被用户空间程序捕获并进行处理。
+    
+    如果路由信息消息的标志 RTM_F_OFFLOAD 被设置，则将 ZEBRA_FLAG_OFFLOADED 标志位设置到 flags 变量中。RTM_F_OFFLOAD 表示该路由信息已经被卸载到硬件等较低的网络层上运行，从而加快路由的处理。
+    
+    如果路由信息消息的标志 RTM_F_OFFLOAD_FAILED 被设置，则将 ZEBRA_FLAG_OFFLOAD_FAILED 标志位设置到 flags 变量中。RTM_F_OFFLOAD_FAILED 表示卸载路由信息到硬件等较低的网络层运行失败，无法加快路由的处理。
+    
+    如果 netlink 消息头的标志位 NLM_F_APPEND 被设置，则将 ZEBRA_FLAG_OUTOFSYNC 标志位设置到 flags 变量中。NLM_F_APPEND 表示该路由信息是一个追加的路由信息，在某些情况下要进行特殊处理，比如更新操作时
+    */
 	if (rtm->rtm_flags & RTM_F_TRAP)
 		flags |= ZEBRA_FLAG_TRAPPED;
 	if (rtm->rtm_flags & RTM_F_OFFLOAD)
@@ -1655,9 +1850,19 @@ int netlink_route_change_read_unicast_internal(struct nlmsghdr *h,
 		flags |= ZEBRA_FLAG_SELFROUTE;
 		proto = proto2zebra(rtm->rtm_protocol, rtm->rtm_family, false);
 	}
+    //获取路由信息中的出口设备索引
 	if (tb[RTA_OIF])
 		index = *(int *)RTA_DATA(tb[RTA_OIF]);
 
+    /*
+    如果路由信息消息的 RTA_DST 消息属性存在，则将这个属性的数据指针赋值给指针变量 dest。RTA_DST 表示路由使用的目的地址。
+    
+    如果路由信息消息的 RTA_DST 消息属性不存在，则将缺省的 anyaddr 指针赋值给 dest 变量。anyaddr 是一个空结构体的指针，用于表示空地址（零地址和广播地址）。
+    
+    如果路由信息消息的 RTA_SRC 消息属性存在，则将这个属性的数据指针赋值给指针变量 src。RTA_SRC 表示该路由信息的源地址。
+    
+    如果路由信息消息的 RTA_SRC 消息属性不存在，则将缺省的 anyaddr 指针赋值给 src 变量
+    */
 	if (tb[RTA_DST])
 		dest = RTA_DATA(tb[RTA_DST]);
 	else
