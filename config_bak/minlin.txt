@@ -64,6 +64,7 @@ sudo create_ap wlp8s0 enp9s0 kalipy3 Abcd1234
 
 //电脑声音实时传给手机
 SoundWireServer
+//配置：录音-->必须选monitor of内置音频
 
 //nginx
 kalipy@debian ~/n/n/conf> pwd
@@ -205,3 +206,92 @@ hw:CARD=Loopback,DEV=1
 
 //重置声音相关内容
 pulseaudio -k
+
+//递归删除所有目录下的所有指定文件(.class文件)
+find . -name "*.class*" -type f -print -exec rm -rf {} \;
+//f表示普通文件
+//-print表示打印find的结果
+//-exec rm -rf {} \;表示删除
+
+//b站弹幕姬
+danmaku 25206807
+
+//dd监控室
+路径：/media/kalipy/kalipy_data/robot
+[I] kalipy@debian /m/k/k/b/riri> pwd
+/media/kalipy/kalipy_data/bilibili_live_vup_dd/riri
+[I] kalipy@debian /m/k/k/b/riri> ll BiliLiveRecord.py
+
+//qq监控室
+[I] kalipy@debian /m/k/k/r/q/oicq-template> pwd
+/media/kalipy/kalipy_data/robot/qqmail/oicq-template
+[I] kalipy@debian /m/k/k/r/q/oicq-template> node plugin-hello.js | tee log.txt
+
+//动态壁纸
+komorebi
+
+//恢复qemu内的文件
+sudo modprobe nbd
+sudo qemu-nbd --connect=/dev/nbd0 debian11.img
+sudo testdisk /dev/nbd0
+sudo qemu-nbd --disconnect /dev/nbd0
+
+//qemu中把linux安装到u盘(非启动盘)
+sudo qemu-system-x86_64 -net nic -net user -cdrom ./debian-11.6.0-amd64-netinst.iso -boot d -drive file=/dev/sdb,format=raw  -enable-kvm -m 4048
+
+//qemu中启动u盘中的linux系统(非启动盘，是真正的linux系统)
+sudo qemu-system-x86_64 -net nic -net user  -drive format=raw,file=/dev/sdb -boot order=c   -enable-kvm -m 4048
+
+
+//qemu中制作启动盘(这里用u.img模拟u盘，真实的u盘请用/dev/sdx)
+sudo partclone.dd -d -s alpine-virt-3.16.0-x86_64.iso -o u.img
+//带额外硬盘且从u盘启动
+sudo qemu-nbd --connect=/dev/nbd1 u.img
+sudo qemu-system-x86_64 -net nic -net tap,ifname=tap0,script=no,downscript=no -drive format=raw,file=/dev/nbd1 -hdb virt-alpine316.img  -boot order=c -enable-kvm -m 4048
+//或者
+sudo qemu-system-x86_64 -net nic -net tap,ifname=tap0,script=no,downscript=no -hda u.img  -hdb virt-alpine316.img  -boot order=c -enable-kvm -m 4048
+
+//磁盘整盘备份
+//方法一(速度非常慢)
+sudo qemu-nbd --connect=/dev/nbd0 virt-alpine316.img
+sudo qemu-nbd --connect=/dev/nbd1 t.qcow2
+//noerror，sync是跳过错误扇区，用0填充
+//progress 能告诉你传输速率，想要看图形化的进度可以用 pv 不过我没用过
+sudo dd if=/dev/nbd0 of=/dev/nbd1 bs=128M status=progress  conv=sync,noerror
+//qemu试试能不能用(ok)
+sudo qemu-system-x86_64 -net nic -net tap,ifname=tap0,script=no,downscript=no -hda t.qcow2     -boot c -enable-kvm -m 4048
+
+//方法二(速度非常快)
+sudo partclone.dd -d -s /dev/nbd0  -o hda1.img
+//qemu试试能不能用(ok)
+sudo qemu-system-x86_64 -net nic -net tap,ifname=tap0,script=no,downscript=no -hda hda1.img     -boot c -enable-kvm -m 4048
+//恢复的错误做法(失败，推荐正确的做法用方法三)
+sudo partclone.ext4 -r -s /dev/nbd1p3 -o /dev/nbd0p3
+sudo partclone.extfs -r -s /dev/nbd1p3 -o /dev/nbd0p3
+//恢复的正确做法(速度非常慢)
+sudo partclone.dd -d -s hda1.img -o /dev/nbd0
+
+//方法三(推荐做法，备份和恢复的速度都最快)
+//第一次整盘备份用dd(或单独备份非文件系统分区)
+//之后:
+//备份ext4分区
+sudo partclone.ext4 -c -d -s /dev/nbd1p1  -o 1.img
+sudo partclone.ext4 -c -d -s /dev/nbd1p3  -o 3.img
+//由于/dev/mbd1p2不是文件系统，所以只能dd拷贝
+sudo partclone.dd -d -s /dev/nbd1p2  -o 2.img
+
+//恢复
+sudo partclone.ext4 -r -s 1.img  -o /dev/nbd0p1
+sudo partclone.ext4 -r -s 3.img  -o /dev/nbd0p3
+//单独恢复dd拷贝的非文件系统的分区
+sudo partclone.dd -d -s 2.img -o /dev/nbd0p2
+
+//分区表和引导问题请还参考(应该够用了)
+vmy_study_notes> im linux下不小心删除了linux的所有分区的恢复方法恢复.md
+my_study_notes> vim win10和linux双系统下重新安装win10后linux的grub引导消失了解决.md
+
+
+//意外的操作，导致/home/kalipy下的所有文件变成了kalipy用户组，不知道会不会对我的debian系统造成影响
+sudo chown kalipy kalipy java -R
+//正确的操作是这样的
+sudo chown kalipy:kalipy java -R
